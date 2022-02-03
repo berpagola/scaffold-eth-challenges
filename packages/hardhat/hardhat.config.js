@@ -20,7 +20,8 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 */
 
 // Select the network you want to deploy to here:
-const defaultNetwork = "localhost";
+//const defaultNetwork = "localhost";
+const defaultNetwork = "mumbai";
 
 const mainnetGwei = 115;
 
@@ -67,6 +68,13 @@ module.exports = {
         mnemonic: mnemonic(),
       },
     },
+    mumbai: {
+      url: "https://matic-mumbai.chainstacklabs.com",
+      gasPrice: 1100000000,
+      accounts: {
+        mnemonic: mnemonic(),
+      },
+    },
     mainnet: {
       url: "https://mainnet.infura.io/v3/ec6a8acd1d354717acec099ad46a0bab", // <---- YOUR INFURA ID! (or it won't work)
       //      url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXXXX/eth/mainnet", // <---- YOUR MORALIS ID! (not limited to infura)
@@ -104,7 +112,7 @@ module.exports = {
       },
     },
     polytest: {
-      url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXX/polygon/mumbai", // <---- YOUR MORALIS ID! (not limited to infura)
+      url: "https://speedy-nodes-nyc.moralis.io/ZbUHbPfXq7kjeeT3e61JUfRG91hGhL2VB99TshcS/polygon/mumbai", // <---- YOUR MORALIS ID! (not limited to infura)
       gasPrice: 1000000000,
       accounts: {
         mnemonic: mnemonic(),
