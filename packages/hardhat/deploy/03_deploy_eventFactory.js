@@ -7,15 +7,15 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const { deployer } = await getNamedAccounts();
   const chainId = await getChainId();
 
-  await deploy("TicketShop", {
+  await deploy("EventFactory", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-     args: [ "Road to WEB 3" ],
+    // args: ["0x45771B4599E315Ea96e601DeA52d54206Fd419A3",  "Road to WEB 3" ],
     log: true,
   });
 
   // Getting a previously deployed contract
-  const ticketShop = await ethers.getContract("TicketShop", deployer);
+  const ticketShop = await ethers.getContract("EventFactory", deployer);
 
   // ToDo: Verify your contract with Etherscan for public chains
   // if (chainId !== "31337") {
@@ -37,4 +37,4 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-module.exports.tags = ["TicketShop"];
+module.exports.tags = ["EventFactory"];

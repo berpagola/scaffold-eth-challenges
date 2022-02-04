@@ -26,7 +26,7 @@ const OPENSEA_LINK = "https://testnets.opensea.io/assets/"
 
 
 
-const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer }) => {
+const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer }) => {
     const [collection, setCollection] = useState({
         loading: true,
         items: [],
@@ -212,8 +212,8 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         console.log("Uploaded Hash: ", uploaded);
         const result = tx(
             writeContracts &&
-            writeContracts.Event &&
-            writeContracts.Event.mintItem(address, uploaded.path),
+            writeContracts.EventFactory &&
+            writeContracts.EventFactory.create(address, "event"+count),
             update => {
                 console.log("📡 Transaction Update:", update);
                 if (update && (update.status === "confirmed" || update.status === 1)) {
@@ -366,4 +366,4 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
     );
 };
 
-export default EventsUI;
+export default YourEvents;

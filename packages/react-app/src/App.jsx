@@ -25,6 +25,7 @@ import { Transactor } from "./helpers";
 import { useContractConfig } from "./hooks";
 // import Hints from "./Hints";
 import EventsUI from "./views/EventsUI";
+import YourEvents from "./views/YourEvents";
 
 const { BufferList } = require("bl");
 const ipfsAPI = require("ipfs-http-client");
@@ -549,6 +550,16 @@ function App(props) {
               Debug Contracts
             </Link>
           </Menu.Item>
+          <Menu.Item key="/yourEvents">
+            <Link
+              onClick={() => {
+                setRoute("/yourEvents");
+              }}
+              to="/createEvent"
+            >
+              Your Events
+            </Link>
+          </Menu.Item>
         </Menu>
         <Switch>
           <Route exact path="/">
@@ -584,13 +595,24 @@ function App(props) {
           <Route path="/debugcontracts">
             <Contract
               //name="YourCollectible"
-              name="TicketShop"
+              name="EventFactory"
               signer={userSigner}
               provider={localProvider}
               address={address}
               blockExplorer={blockExplorer}
               contractConfig={contractConfig}
             />
+          </Route>
+          <Route path="/createEvent">
+          <YourEvents
+                  loadWeb3Modal={loadWeb3Modal}
+                  address={address}
+                  tx={tx}
+                  writeContracts={writeContracts}
+                  readContracts={readContracts}
+                  mainnetProvider={mainnetProvider}
+                  blockExplorer={blockExplorer}
+                />
           </Route>
         </Switch>
       </BrowserRouter>

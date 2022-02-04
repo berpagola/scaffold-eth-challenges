@@ -1,1 +1,1 @@
-module.exports = ["YourCollectible","TicketShop"];
+module.exports = ["YourCollectible","Event"];

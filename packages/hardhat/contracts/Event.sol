@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract TicketShop is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
+contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
@@ -16,8 +16,9 @@ contract TicketShop is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     string public eventName;
     address public eventOwner;
 
-    constructor(string memory _eventName) ERC721("TicketShop", "CIV") {
+    constructor(address _eventOwner, string memory _eventName) ERC721(_eventName, "CIV") payable {
         eventName = _eventName;
+        eventOwner = _eventOwner;
     }
 
     function setEventName(string memory _eventName) 
@@ -25,12 +26,6 @@ contract TicketShop is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     {
         require(msg.sender == eventOwner, "NOT EVENT OWNER!!");
         eventName = _eventName;
-    }
-
-    function setEventOwner(address _eventOwner) 
-        public 
-    {
-        eventOwner = _eventOwner;
     }
 
     function  getEventName() 
