@@ -58,8 +58,10 @@ const { ethers } = require("ethers");
 const targetNetwork = NETWORKS.mumbai; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
-const DEBUG = true;
+const DEBUG = false;
 const NETWORKCHECK = true; 
+
+const USE_BURNER_WALLETS = false;
 
 // EXAMPLE STARTING JSON:
 const STARTING_JSON = {
@@ -215,7 +217,7 @@ function App(props) {
   /* 🔥 This hook will get the price of Gas from ⛽️ EtherGasStation */
   const gasPrice = useGasPrice(targetNetwork, "fast");
   // Use your injected provider from 🦊 Metamask or if you don't have it then instantly generate a 🔥 burner wallet.
-  const userProviderAndSigner = useUserProviderAndSigner(injectedProvider, localProvider);
+  const userProviderAndSigner = useUserProviderAndSigner(injectedProvider, localProvider, USE_BURNER_WALLETS);
   const userSigner = userProviderAndSigner.signer;
 
   useEffect(() => {
@@ -245,7 +247,7 @@ function App(props) {
   const yourLocalBalance = useBalance(localProvider, address);
 
   // Just plug in different 🛰 providers to get your balance on different chains:
-  const yourMainnetBalance = useBalance(mainnetProvider, address);
+  //const yourMainnetBalance = useBalance(mainnetProvider, address);
 
   const contractConfig = useContractConfig();
 
@@ -254,6 +256,7 @@ function App(props) {
 
   // If you want to make 🔐 write transactions to your contracts, use the userSigner:
   const writeContracts = useContractLoader(userSigner, contractConfig, localChainId);
+  //const writeContracts = useContractLoader(localProvider, contractConfig, localChainId);
 
   // EXTERNAL CONTRACT EXAMPLE:
   //
@@ -261,9 +264,9 @@ function App(props) {
   const mainnetContracts = useContractLoader(mainnetProvider, contractConfig);
 
   // If you want to call a function on a new block
-  useOnBlock(mainnetProvider, () => {
-    console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
-  });
+  //useOnBlock(mainnetProvider, () => {
+  //  console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
+  //});
 
   // Then read your DAI balance like:
   const myMainnetDAIBalance = useContractReader(mainnetContracts, "DAI", "balanceOf", [
@@ -272,7 +275,7 @@ function App(props) {
 
   // keep track of a variable from the contract in the local React state:
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
-  console.log("🤗 balance:", balance);
+  console.log("🤗 balanceeee:", balance);
 
   // 📟 Listen for broadcast events
   const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
@@ -331,7 +334,7 @@ function App(props) {
       address &&
       selectedChainId &&
       yourLocalBalance &&
-      yourMainnetBalance &&
+      //yourMainnetBalance &&
       readContracts &&
       writeContracts &&
       mainnetContracts
@@ -342,7 +345,7 @@ function App(props) {
       console.log("👩‍💼 selected address:", address);
       console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
       console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-      console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
+      //console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
       console.log("📝 readContracts", readContracts);
       console.log("🌍 DAI contract on mainnet:", mainnetContracts);
       console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
@@ -353,7 +356,7 @@ function App(props) {
     address,
     selectedChainId,
     yourLocalBalance,
-    yourMainnetBalance,
+    //yourMainnetBalance,
     readContracts,
     writeContracts,
     mainnetContracts,
@@ -437,11 +440,11 @@ function App(props) {
       );
     }
   } else {
-    networkDisplay = (
-      <div style={{ zIndex: -1, position: "absolute", right: 154, top: 28, padding: 16, color: targetNetwork.color }}>
-        {targetNetwork.name}
-      </div>
-    );
+    //networkDisplay = (
+     // <div style={{ zIndex: -1, position: "absolute", right: 154, top: 28, padding: 16, color: targetNetwork.color }}>
+     //   {targetNetwork.name}
+     // </div>
+    //);
   }
 
   const loadWeb3Modal = useCallback(async () => {
@@ -486,6 +489,7 @@ function App(props) {
     localProvider._network &&
     localProvider._network.chainId == 31337 &&
     yourLocalBalance &&
+    address &&
     ethers.utils.formatEther(yourLocalBalance) <= 0
   ) {
     faucetHint = (
@@ -645,6 +649,15 @@ function App(props) {
     const uploaded = await ipfs.add(JSON.stringify(json[count]));
     setCount(count + 1);
     console.log("Uploaded Hash: ", uploaded);
+    /*
+    try {
+      const txCur = await tx(writeContracts.YourCollectible.mintItem(address, uploaded.path));
+      await txCur.wait();
+    } catch (e) {
+      console.log("mint failed", e);
+    }
+    */
+    
     const result = tx(
       writeContracts &&
         writeContracts.YourCollectible &&
@@ -904,6 +917,7 @@ function App(props) {
       {/* 👨‍💼 Your account is in the top right with a wallet at connect options */}
       <div style={{ position: "fixed", textAlign: "right", right: 0, top: 0, padding: 10 }}>
         <Account
+          USE_BURNER_WALLETS={USE_BURNER_WALLETS}
           address={address}
           localProvider={localProvider}
           userSigner={userSigner}
