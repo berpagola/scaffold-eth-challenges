@@ -12,12 +12,8 @@ import {
   useUserProviderAndSigner,
 } from "eth-hooks";
 import { useExchangeEthPrice } from "eth-hooks/dapps/dex";
-import { useEventListener } from "eth-hooks/events/useEventListener";
 import Fortmatic from "fortmatic";
-// https://www.npmjs.com/package/ipfs-http-client
-// import { create } from "ipfs-http-client";
 import React, { useCallback, useEffect, useState } from "react";
-import ReactJson from "react-json-view";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
@@ -58,10 +54,11 @@ const { ethers } = require("ethers");
 const targetNetwork = NETWORKS.mumbai; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
-const DEBUG = false;
+const DEBUG = true;
 const NETWORKCHECK = true; 
 
 const USE_BURNER_WALLETS = false;
+const USE_FAUCET = false;
 
 // EXAMPLE STARTING JSON:
 const STARTING_JSON = {
@@ -247,7 +244,7 @@ function App(props) {
   const yourLocalBalance = useBalance(localProvider, address);
 
   // Just plug in different 🛰 providers to get your balance on different chains:
-  //const yourMainnetBalance = useBalance(mainnetProvider, address);
+  const yourMainnetBalance = useBalance(mainnetProvider, address);
 
   const contractConfig = useContractConfig();
 
@@ -264,9 +261,9 @@ function App(props) {
   const mainnetContracts = useContractLoader(mainnetProvider, contractConfig);
 
   // If you want to call a function on a new block
-  //useOnBlock(mainnetProvider, () => {
-  //  console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
-  //});
+  useOnBlock(mainnetProvider, () => {
+    console.log(`⛓ A new mainnet block is here: ${mainnetProvider._lastBlockNumber}`);
+  });
 
   // Then read your DAI balance like:
   const myMainnetDAIBalance = useContractReader(mainnetContracts, "DAI", "balanceOf", [
@@ -278,8 +275,8 @@ function App(props) {
   console.log("🤗 balanceeee:", balance);
 
   // 📟 Listen for broadcast events
-  const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
-  console.log("📟 Transfer events:", transferEvents);
+  //const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
+  //console.log("📟 Transfer events:", transferEvents);
 
   //
   // 🧠 This effect will update yourCollectibles by polling when your balance changes
@@ -334,7 +331,7 @@ function App(props) {
       address &&
       selectedChainId &&
       yourLocalBalance &&
-      //yourMainnetBalance &&
+      yourMainnetBalance &&
       readContracts &&
       writeContracts &&
       mainnetContracts
@@ -345,7 +342,7 @@ function App(props) {
       console.log("👩‍💼 selected address:", address);
       console.log("🕵🏻‍♂️ selectedChainId:", selectedChainId);
       console.log("💵 yourLocalBalance", yourLocalBalance ? ethers.utils.formatEther(yourLocalBalance) : "...");
-      //console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
+      console.log("💵 yourMainnetBalance", yourMainnetBalance ? ethers.utils.formatEther(yourMainnetBalance) : "...");
       console.log("📝 readContracts", readContracts);
       console.log("🌍 DAI contract on mainnet:", mainnetContracts);
       console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
@@ -356,7 +353,7 @@ function App(props) {
     address,
     selectedChainId,
     yourLocalBalance,
-    //yourMainnetBalance,
+    yourMainnetBalance,
     readContracts,
     writeContracts,
     mainnetContracts,
@@ -649,7 +646,7 @@ function App(props) {
     const uploaded = await ipfs.add(JSON.stringify(json[count]));
     setCount(count + 1);
     console.log("Uploaded Hash: ", uploaded);
-    /*
+    /* 
     try {
       const txCur = await tx(writeContracts.YourCollectible.mintItem(address, uploaded.path));
       await txCur.wait();
@@ -695,36 +692,6 @@ function App(props) {
               to="/"
             >
               YourCollectibles
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/transfers">
-            <Link
-              onClick={() => {
-                setRoute("/transfers");
-              }}
-              to="/transfers"
-            >
-              Transfers
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/ipfsup">
-            <Link
-              onClick={() => {
-                setRoute("/ipfsup");
-              }}
-              to="/ipfsup"
-            >
-              IPFS Upload
-            </Link>
-          </Menu.Item>
-          <Menu.Item key="/ipfsdown">
-            <Link
-              onClick={() => {
-                setRoute("/ipfsdown");
-              }}
-              to="/ipfsdown"
-            >
-              IPFS Download
             </Link>
           </Menu.Item>
           <Menu.Item key="/debugcontracts">
@@ -806,99 +773,6 @@ function App(props) {
               />
             </div>
           </Route>
-
-          <Route path="/transfers">
-            <div style={{ width: 600, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-              <List
-                bordered
-                dataSource={transferEvents}
-                renderItem={item => {
-                  return (
-                    <List.Item key={item[0] + "_" + item[1] + "_" + item.blockNumber + "_" + item.args[2].toNumber()}>
-                      <span style={{ fontSize: 16, marginRight: 8 }}>#{item.args[2].toNumber()}</span>
-                      <Address address={item.args[0]} ensProvider={mainnetProvider} fontSize={16} /> =&gt;
-                      <Address address={item.args[1]} ensProvider={mainnetProvider} fontSize={16} />
-                    </List.Item>
-                  );
-                }}
-              />
-            </div>
-          </Route>
-
-          <Route path="/ipfsup">
-            <div style={{ paddingTop: 32, width: 740, margin: "auto", textAlign: "left" }}>
-              <ReactJson
-                style={{ padding: 8 }}
-                src={yourJSON}
-                theme="pop"
-                enableClipboard={false}
-                onEdit={(edit, a) => {
-                  setYourJSON(edit.updated_src);
-                }}
-                onAdd={(add, a) => {
-                  setYourJSON(add.updated_src);
-                }}
-                onDelete={(del, a) => {
-                  setYourJSON(del.updated_src);
-                }}
-              />
-            </div>
-
-            <Button
-              style={{ margin: 8 }}
-              loading={sending}
-              size="large"
-              shape="round"
-              type="primary"
-              onClick={async () => {
-                console.log("UPLOADING...", yourJSON);
-                setSending(true);
-                setIpfsHash();
-                const result = await ipfs.add(JSON.stringify(yourJSON)); // addToIPFS(JSON.stringify(yourJSON))
-                if (result && result.path) {
-                  setIpfsHash(result.path);
-                }
-                setSending(false);
-                console.log("RESULT:", result);
-              }}
-            >
-              Upload to IPFS
-            </Button>
-
-            <div style={{ padding: 16, paddingBottom: 150 }}>{ipfsHash}</div>
-          </Route>
-          <Route path="/ipfsdown">
-            <div style={{ paddingTop: 32, width: 740, margin: "auto" }}>
-              <Input
-                value={ipfsDownHash}
-                placeHolder="IPFS hash (like QmadqNw8zkdrrwdtPFK1pLi8PPxmkQ4pDJXY8ozHtz6tZq)"
-                onChange={e => {
-                  setIpfsDownHash(e.target.value);
-                }}
-              />
-            </div>
-            <Button
-              style={{ margin: 8 }}
-              loading={sending}
-              size="large"
-              shape="round"
-              type="primary"
-              onClick={async () => {
-                console.log("DOWNLOADING...", ipfsDownHash);
-                setDownloading(true);
-                setIpfsContent();
-                const result = await getFromIPFS(ipfsDownHash); // addToIPFS(JSON.stringify(yourJSON))
-                if (result && result.toString) {
-                  setIpfsContent(result.toString());
-                }
-                setDownloading(false);
-              }}
-            >
-              Download from IPFS
-            </Button>
-
-            <pre style={{ padding: 16, width: 500, margin: "auto", paddingBottom: 150 }}>{ipfsContent}</pre>
-          </Route>
           <Route path="/debugcontracts">
             <Contract
               name="YourCollectible"
@@ -932,7 +806,7 @@ function App(props) {
       </div>
 
       {/* 🗺 Extra UI like gas price, eth price, faucet, and support: */}
-      <div style={{ position: "fixed", textAlign: "left", left: 0, bottom: 20, padding: 10 }}>
+      {USE_FAUCET?<div style={{ position: "fixed", textAlign: "left", left: 0, bottom: 20, padding: 10 }}>
         <Row align="middle" gutter={[4, 4]}>
           <Col span={8}>
             <Ramp price={price} address={address} networks={NETWORKS} />
@@ -969,7 +843,7 @@ function App(props) {
             }
           </Col>
         </Row>
-      </div>
+      </div>:""}
     </div>
   );
 }
