@@ -24,6 +24,7 @@ import { INFURA_ID, NETWORK, NETWORKS } from "./constants";
 import { Transactor } from "./helpers";
 import { useContractConfig } from "./hooks";
 // import Hints from "./Hints";
+import EventsUI from "./views/EventsUI";
 
 const { BufferList } = require("bl");
 const ipfsAPI = require("ipfs-http-client");
@@ -56,7 +57,7 @@ const targetNetwork = NETWORKS.localhost; // <------- select your target fronten
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
-const NETWORKCHECK = true; 
+const NETWORKCHECK = true;
 
 const USE_BURNER_WALLETS = false;
 const USE_FAUCET = false;
@@ -106,8 +107,8 @@ const scaffoldEthProvider = navigator.onLine
   : null;
 const poktMainnetProvider = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider(
-      "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
-    )
+    "https://eth-mainnet.gateway.pokt.network/v1/lb/611156b4a585a20035148406",
+  )
   : null;
 const mainnetInfura = navigator.onLine
   ? new ethers.providers.StaticJsonRpcProvider("https://mainnet.infura.io/v3/" + INFURA_ID)
@@ -193,8 +194,8 @@ function App(props) {
     poktMainnetProvider && poktMainnetProvider._isProvider
       ? poktMainnetProvider
       : scaffoldEthProvider && scaffoldEthProvider._network
-      ? scaffoldEthProvider
-      : mainnetInfura;
+        ? scaffoldEthProvider
+        : mainnetInfura;
 
   const [injectedProvider, setInjectedProvider] = useState();
   const [address, setAddress] = useState();
@@ -439,9 +440,9 @@ function App(props) {
     }
   } else {
     //networkDisplay = (
-     // <div style={{ zIndex: -1, position: "absolute", right: 154, top: 28, padding: 16, color: targetNetwork.color }}>
-     //   {targetNetwork.name}
-     // </div>
+    // <div style={{ zIndex: -1, position: "absolute", right: 154, top: 28, padding: 16, color: targetNetwork.color }}>
+    //   {targetNetwork.name}
+    // </div>
     //);
   }
 
@@ -518,186 +519,8 @@ function App(props) {
   const [minting, setMinting] = useState(false);
   const [count, setCount] = useState(1);
 
-  // the json for the nfts
-  const json = {
-    1: {
-      description: "It's actually a bison?",
-      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-      image: "https://austingriffith.com/images/paintings/buffalo.jpg",
-      name: "Buffalo",
-      attributes: [
-        {
-          trait_type: "BackgroundColor",
-          value: "green",
-        },
-        {
-          trait_type: "Eyes",
-          value: "googly",
-        },
-        {
-          trait_type: "Stamina",
-          value: 42,
-        },
-      ],
-    },
-    2: {
-      description: "What is it so worried about?",
-      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-      image: "https://austingriffith.com/images/paintings/zebra.jpg",
-      name: "Zebra",
-      attributes: [
-        {
-          trait_type: "BackgroundColor",
-          value: "blue",
-        },
-        {
-          trait_type: "Eyes",
-          value: "googly",
-        },
-        {
-          trait_type: "Stamina",
-          value: 38,
-        },
-      ],
-    },
-    3: {
-      description: "What a horn!",
-      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-      image: "https://austingriffith.com/images/paintings/rhino.jpg",
-      name: "Rhino",
-      attributes: [
-        {
-          trait_type: "BackgroundColor",
-          value: "pink",
-        },
-        {
-          trait_type: "Eyes",
-          value: "googly",
-        },
-        {
-          trait_type: "Stamina",
-          value: 22,
-        },
-      ],
-    },
-    4: {
-      description: "Is that an underbyte?",
-      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-      image: "https://austingriffith.com/images/paintings/fish.jpg",
-      name: "Fish",
-      attributes: [
-        {
-          trait_type: "BackgroundColor",
-          value: "blue",
-        },
-        {
-          trait_type: "Eyes",
-          value: "googly",
-        },
-        {
-          trait_type: "Stamina",
-          value: 15,
-        },
-      ],
-    },
-    5: {
-      description: "So delicate.",
-      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-      image: "https://austingriffith.com/images/paintings/flamingo.jpg",
-      name: "Flamingo",
-      attributes: [
-        {
-          trait_type: "BackgroundColor",
-          value: "black",
-        },
-        {
-          trait_type: "Eyes",
-          value: "googly",
-        },
-        {
-          trait_type: "Stamina",
-          value: 6,
-        },
-      ],
-    },
-    6: {
-      description: "Raaaar!",
-      external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-      image: "https://austingriffith.com/images/paintings/godzilla.jpg",
-      name: "Godzilla",
-      attributes: [
-        {
-          trait_type: "BackgroundColor",
-          value: "orange",
-        },
-        {
-          trait_type: "Eyes",
-          value: "googly",
-        },
-        {
-          trait_type: "Stamina",
-          value: 99,
-        },
-      ],
-    },
-  };
 
-  const mintItem = async () => {
-    // upload to ipfs
-    const uploaded = await ipfs.add(JSON.stringify(json[count]));
-    setCount(count + 1);
-    console.log("Uploaded Hash: ", uploaded);
-    /* 
-    try {
-      const txCur = await tx(writeContracts.YourCollectible.mintItem(address, uploaded.path));
-      await txCur.wait();
-    } catch (e) {
-      console.log("mint failed", e);
-    }
-    */
-    /*
-    const result = tx(
-      writeContracts &&
-        writeContracts.YourCollectible &&
-        writeContracts.YourCollectible.mintItem(address, uploaded.path),
-      update => {
-        console.log("📡 Transaction Update:", update);
-        if (update && (update.status === "confirmed" || update.status === 1)) {
-          console.log(" 🍾 Transaction " + update.hash + " finished!");
-          console.log(
-            " ⛽️ " +
-              update.gasUsed +
-              "/" +
-              (update.gasLimit || update.gas) +
-              " @ " +
-              parseFloat(update.gasPrice) / 1000000000 +
-              " gwei",
-          );
-        }
-      },
-    );
-    */
-    const result = tx(
-      writeContracts &&
-        writeContracts.TicketShop &&
-        writeContracts.TicketShop.mintItem(address, uploaded.path),
-      update => {
-        console.log("📡 Transaction Update:", update);
-        if (update && (update.status === "confirmed" || update.status === 1)) {
-          console.log(" 🍾 Transaction " + update.hash + " finished!");
-          console.log(
-            " ⛽️ " +
-              update.gasUsed +
-              "/" +
-              (update.gasLimit || update.gas) +
-              " @ " +
-              parseFloat(update.gasPrice) / 1000000000 +
-              " gwei",
-          );
-        }
-      },
-    );
-  };
+
 
   return (
     <div className="App">
@@ -713,7 +536,7 @@ function App(props) {
               }}
               to="/"
             >
-              YourCollectibles
+              Your Tickets
             </Link>
           </Menu.Item>
           <Menu.Item key="/debugcontracts">
@@ -729,70 +552,33 @@ function App(props) {
         </Menu>
         <Switch>
           <Route exact path="/">
-            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-              <Button
-                disabled={minting}
-                shape="round"
-                size="large"
-                onClick={() => {
-                  mintItem();
-                }}
-              >
-                MINT NFT
+          <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+            {address ? (
+              <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+                <EventsUI
+                  loadWeb3Modal={loadWeb3Modal}
+                  address={address}
+                  tx={tx}
+                  writeContracts={writeContracts}
+                  readContracts={readContracts}
+                  mainnetProvider={mainnetProvider}
+                  blockExplorer={blockExplorer}
+                />
+                <EventsUI
+                  loadWeb3Modal={loadWeb3Modal}
+                  address={address}
+                  tx={tx}
+                  writeContracts={writeContracts}
+                  readContracts={readContracts}
+                  mainnetProvider={mainnetProvider}
+                  blockExplorer={blockExplorer}
+                />
+              </div>
+            ) : (
+              <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
+                Connect Ethereum Wallet To Mint
               </Button>
-            </div>
-            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-              <List
-                bordered
-                dataSource={yourCollectibles}
-                renderItem={item => {
-                  const id = item.id.toNumber();
-                  return (
-                    <List.Item key={id + "_" + item.uri + "_" + item.owner}>
-                      <Card
-                        title={
-                          <div>
-                            <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
-                          </div>
-                        }
-                      >
-                        <div>
-                          <img src={item.image} style={{ maxWidth: 150 }} />
-                        </div>
-                        <div>{item.description}</div>
-                      </Card>
-
-                      <div>
-                        owner:{" "}
-                        <Address
-                          address={item.owner}
-                          ensProvider={mainnetProvider}
-                          blockExplorer={blockExplorer}
-                          fontSize={16}
-                        />
-                        <AddressInput
-                          ensProvider={mainnetProvider}
-                          placeholder="transfer to address"
-                          value={transferToAddresses[id]}
-                          onChange={newValue => {
-                            const update = {};
-                            update[id] = newValue;
-                            setTransferToAddresses({ ...transferToAddresses, ...update });
-                          }}
-                        />
-                        <Button
-                          onClick={() => {
-                            console.log("writeContracts", writeContracts);
-                            tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
-                          }}
-                        >
-                          Transfer
-                        </Button>
-                      </div>
-                    </List.Item>
-                  );
-                }}
-              />
+            )}
             </div>
           </Route>
           <Route path="/debugcontracts">
@@ -829,7 +615,7 @@ function App(props) {
       </div>
 
       {/* 🗺 Extra UI like gas price, eth price, faucet, and support: */}
-      {USE_FAUCET?<div style={{ position: "fixed", textAlign: "left", left: 0, bottom: 20, padding: 10 }}>
+      {USE_FAUCET ? <div style={{ position: "fixed", textAlign: "left", left: 0, bottom: 20, padding: 10 }}>
         <Row align="middle" gutter={[4, 4]}>
           <Col span={8}>
             <Ramp price={price} address={address} networks={NETWORKS} />
@@ -866,7 +652,7 @@ function App(props) {
             }
           </Col>
         </Row>
-      </div>:""}
+      </div> : ""}
     </div>
   );
 }

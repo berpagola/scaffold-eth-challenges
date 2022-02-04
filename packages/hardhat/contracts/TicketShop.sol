@@ -6,18 +6,39 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract TicketShop is
-    ERC721,
-    ERC721Enumerable,
-    ERC721URIStorage,
-    Ownable
-{
+contract TicketShop is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
+    using SafeMath for uint256;
 
     Counters.Counter private _tokenIdCounter;
+    string public eventName;
+    address public eventOwner;
 
-    constructor() ERC721("TicketShop", "CIV") {}
+    constructor(string memory _eventName) ERC721("TicketShop", "CIV") {
+        eventName = _eventName;
+    }
+
+    function setEventName(string memory _eventName) 
+        public 
+    {
+        require(msg.sender == eventOwner, "NOT EVENT OWNER!!");
+        eventName = _eventName;
+    }
+
+    function setEventOwner(address _eventOwner) 
+        public 
+    {
+        eventOwner = _eventOwner;
+    }
+
+    function  getEventName() 
+        public view
+        returns (string memory)
+    {
+        return (eventName);
+    }
 
     function _baseURI() internal pure override returns (string memory) {
         return "https://ipfs.io/ipfs/";

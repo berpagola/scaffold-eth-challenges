@@ -10,7 +10,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   await deploy("TicketShop", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    // args: [ "Hello", ethers.utils.parseEther("1.5") ],
+     args: [ "Road to WEB 3" ],
     log: true,
   });
 
