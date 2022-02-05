@@ -16,40 +16,40 @@ contract EventFactory is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     constructor() ERC721("Events Factory", "CIV") payable {
 
     }
-
-    function create(address _owner, string memory _model) public {
+    
+    function create(address _owner, string memory _eventName, uint256 _ticketLimit, uint256 _ticketsPerWalletLimit, uint256 _ticketPrice) public {
         _idCounter.increment();
-        Event e = new Event(_owner, _model);
+        Event e = new Event(_owner, _eventName, _ticketLimit, _ticketsPerWalletLimit, _ticketPrice);
         es.push(e);
         mintItem(_owner);
     }
- 
-    function createAndSendEther(address _owner, string memory _model) public payable {
+ /*
+    function createAndSendEther(address _owner, string memory _model, uint256 _ticketLimit) public payable {
         _idCounter.increment();
-        Event e = (new Event){value: msg.value}(_owner, _model);
+        Event e = (new Event){value: msg.value}(_owner, _model, _ticketLimit);
         es.push(e);
     }
 
     function create2(
         address _owner,
         string memory _model,
-        bytes32 _salt
+        bytes32 _salt, uint256 _ticketLimit
     ) public {
         _idCounter.increment();
-        Event e = (new Event){salt: _salt}(_owner, _model);
+        Event e = (new Event){salt: _salt}(_owner, _model, _ticketLimit);
         es.push(e);
     }
 
     function create2AndSendEther(
         address _owner,
         string memory _model,
-        bytes32 _salt
+        bytes32 _salt, uint256 _ticketLimit
     ) public payable {
         _idCounter.increment();
-        Event e = (new Event){value: msg.value, salt: _salt}(_owner, _model);
+        Event e = (new Event){value: msg.value, salt: _salt}(_owner, _model, _ticketLimit);
         es.push(e);
     }
-
+*/
     function getEvent(uint _index)
         public
         view
@@ -57,12 +57,13 @@ contract EventFactory is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
             address owner,
             string memory model,
             address eAddr,
-            uint balance
+            uint balance, 
+            uint256 _ticketLimit
         )
     {
         Event e = es[_index];
 
-        return (e.owner(), e.eventName(), e.eventAddr(), address(e).balance);
+        return (e.owner(), e.eventName(), e.eventAddr(), address(e).balance, e.getTicketLimit());
     }
 
     function mintItem(address to) private returns (uint256) {

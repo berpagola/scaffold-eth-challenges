@@ -613,6 +613,7 @@ function App(props) {
               readContracts={readContracts}
               mainnetProvider={mainnetProvider}
               blockExplorer={blockExplorer}
+              userSigner={userSigner}
             />
           </Route>
         </Switch>

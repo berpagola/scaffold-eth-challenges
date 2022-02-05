@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
@@ -16,10 +17,16 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     string public eventName;
     address public eventOwner;
     address public eventAddr;
+    uint256 private ticketLimit;
+    uint256 private ticketsPerWalletLimit;
+    uint256 private ticketPrice;
 
-    constructor(address _eventOwner, string memory _eventName) ERC721(_eventName, "CIV") payable {
+    constructor(address _eventOwner, string memory _eventName, uint256 _ticketLimit, uint256 _ticketsPerWalletLimit, uint256 _ticketPrice) ERC721(_eventName, "CIV") payable {
         eventName = _eventName;
         eventOwner = _eventOwner;
+        ticketLimit = _ticketLimit;
+        ticketPrice = _ticketPrice;
+        ticketsPerWalletLimit = _ticketsPerWalletLimit;
         eventAddr = address(this);
     }
 
@@ -37,13 +44,53 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         return (eventName);
     }
 
+    function  getTicketLimit() 
+        public view
+        returns (uint256)
+    {
+        return (ticketLimit);
+    }
+
+    function  getTicketPrice() 
+        public view
+        returns (uint256)
+    {
+        return (ticketPrice);
+    }
+
+    function  getTicketsSold() 
+        public view
+        returns (uint256)
+    {
+        return (_tokenIdCounter.current());
+    }
+
+    function  getTicketsPerWalletLimit() 
+        public view
+        returns (uint256)
+    {
+        return (ticketsPerWalletLimit);
+    }
+
     function _baseURI() internal pure override returns (string memory) {
         return "https://ipfs.io/ipfs/";
     }
 
-    function mintItem(address to, string memory uri) public returns (uint256) {
+    function mintItem(address to, string memory uri) public payable returns (uint256) {
         _tokenIdCounter.increment();
+        console.log("current", _tokenIdCounter.current());
+        console.log("ticketLimit", ticketLimit);
+        uint256 currentPrice = ticketPrice;
+        console.log("currentPrice", currentPrice);
+        console.log("msg.value", msg.value);
+        require(msg.value >= currentPrice, "sorry, price has increased");
         uint256 tokenId = _tokenIdCounter.current();
+        require(tokenId <= ticketLimit, "NO MORE TICKETS FOR THIS EVENT");
+        uint256 currentTicketsPerWalletLimit = ticketsPerWalletLimit;
+        console.log("currentTicketsPerWalletLimit", currentTicketsPerWalletLimit);
+        uint256 ticketsOfUser = balanceOf(to);
+        console.log("ticketsOfUser", ticketsOfUser);
+        require(ticketsOfUser < currentTicketsPerWalletLimit, "CAN'T BUY MORE TICKETS WITH THIS WALLET");
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         return tokenId;

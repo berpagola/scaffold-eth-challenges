@@ -10,7 +10,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   await deploy("Event", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-     args: ["0x45771B4599E315Ea96e601DeA52d54206Fd419A3",  "Road to WEB 3" ],
+     args: ["0x45771B4599E315Ea96e601DeA52d54206Fd419A3",  "Road to WEB 3", "5", "2", "1" ],
     log: true,
   });
 
