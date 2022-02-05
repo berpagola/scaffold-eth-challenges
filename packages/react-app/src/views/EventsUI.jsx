@@ -42,6 +42,9 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
 
     const [count, setCount] = useState(1);
     const [eventname, setName] = useState("");
+    const [eventLimit, setLimit] = useState("");
+    const [eventTicketsSold, setSold] = useState("");
+    const [eventTicketPrice, setPrice] = useState("");
 
 
     // keep track of a variable from the contract in the local React state:
@@ -68,6 +71,24 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         const name = await eventContract.getEventName();
         console.log("name", name)
         setName(name);
+    };
+
+    const getEventLimit = async () => {
+        const limit = await eventContract.getTicketLimit();
+        console.log("limit", limit)
+        setLimit(ethers.utils.formatUnits(limit,0));
+    };
+
+    const getTicketsSold = async () => {
+        const sold = await eventContract.getTicketsSold();
+        console.log("sold", sold)
+        setSold(ethers.utils.formatUnits(sold,0));
+    };
+
+    const getTicketPrice = async () => {
+        const price = await eventContract.getTicketPrice();
+        console.log("price", price)
+        setPrice(ethers.utils.formatUnits(price,18));
     };
 
     const getFromIPFS = async hashToGet => {
@@ -226,6 +247,9 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         if (eventContract == null)
             eventContract = await new Contract(eventAdd, EventABI, userSigner);
             await getEventName();
+            await getEventLimit();
+            await getTicketsSold();
+            await getTicketPrice();
     };
 
     const mintItem = async () => {
@@ -235,7 +259,9 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         console.log("Uploaded Hash: ", uploaded);
         console.log("eventContract: ", eventContract);
         await setContract();
-        await eventContract.mintItem(address, uploaded.path)
+        let price = eventContract.getTicketPrice();
+        //await eventContract.mintItem(address, uploaded.path)
+        tx(eventContract.mintItem(address, uploaded.path, { value: price }));
         loadCollection();
     };
 
@@ -287,7 +313,7 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
     };
 
     useEffect(() => {
-        if (eventContract == null) loadCollection();
+        loadCollection();
     }, [address, readContracts, writeContracts]);
 
     console.log("collection.items", collection.items)
@@ -299,8 +325,10 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
                 <>
                     <div style={{ width: 640, margin: "auto", marginTop: 2, paddingBottom: 32 }}>
                         <div style={{ padding: 32, width: 400, margin: "auto" }}>
-                            <div>Event name:</div>
-                            {eventname}
+                            <div>Event name: {eventname}</div>
+                            <div>Event limit: {eventLimit}</div>
+                            <div>Tickets sold: {eventTicketsSold}</div>
+                            <div>Tickets price: {eventTicketPrice}</div>
                         </div>
                         <List
                             bordered
