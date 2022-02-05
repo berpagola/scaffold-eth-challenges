@@ -39,11 +39,11 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
 
 
     // keep track of a variable from the contract in the local React state:
-    const balance = useContractReader(readContracts, "Event", "balanceOf", [address]);
+    const balance = useContractReader(readContracts, "EventFactory", "balanceOf", [address]);
     console.log("🤗 balanceeee:", balance);
 
     // keep track of a variable from the contract in the local React state:
-    const name = useContractReader(readContracts, "Event", "name");
+    const name = useContractReader(readContracts, "EventFactory", "name");
     console.log("🤗 event name:", name);
 
     // 📟 Listen for broadcast events
@@ -57,163 +57,32 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
     const [yourCollectibles, setYourCollectibles] = useState();
 
     const [transferToAddresses, setTransferToAddresses] = useState({});
-
-    const getEventName = async () => {
-        const name = await readContracts.Event.getEventName();
-        console.log("name", name)
-        setName(name);
-    };
-
+    /*
+        const getEventName = async () => {
+            const name = await readContracts.EventFactory.getEventName();
+            console.log("name", name)
+            setName(name);
+        };
+    */
     const getTokenURI = async (ownerAddress, index) => {
-        await getEventName();
-        const id = await readContracts.Event.tokenOfOwnerByIndex(ownerAddress, index);
-        const tokenURI = await readContracts.Event.tokenURI(id);
-        console.log("tokenURI", tokenURI)
-        try {
-            const metadata = await axios.get(tokenURI);
-            if (metadata) {
-                return { ...metadata.data, id, tokenURI /*, approved: approved === writeContracts.GigaNFT.address */ };
-            }
-        } catch (e) { console.log(e) }
+        //await getEventName();
+        console.log("GEtting token index", index);
+        const tokenId = await readContracts.EventFactory.tokenOfOwnerByIndex(ownerAddress, index);
+        console.log("tokenId", tokenId);
+        const tokenURI = await readContracts.EventFactory.tokenURI(tokenId);
+        console.log("tokenURI", tokenURI);
+        return tokenURI;
 
         //console.log("metadata",metadata.data)
         //const approved = await readContracts.GigaNFT.getApproved(id);
 
     };
-    // the json for the nfts
-    const json = {
-        1: {
-            description: "It's actually a bison?",
-            external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-            image: "https://austingriffith.com/images/paintings/buffalo.jpg",
-            name: "Buffalo",
-            attributes: [
-                {
-                    trait_type: "BackgroundColor",
-                    value: "green",
-                },
-                {
-                    trait_type: "Eyes",
-                    value: "googly",
-                },
-                {
-                    trait_type: "Stamina",
-                    value: 42,
-                },
-            ],
-        },
-        2: {
-            description: "What is it so worried about?",
-            external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-            image: "https://austingriffith.com/images/paintings/zebra.jpg",
-            name: "Zebra",
-            attributes: [
-                {
-                    trait_type: "BackgroundColor",
-                    value: "blue",
-                },
-                {
-                    trait_type: "Eyes",
-                    value: "googly",
-                },
-                {
-                    trait_type: "Stamina",
-                    value: 38,
-                },
-            ],
-        },
-        3: {
-            description: "What a horn!",
-            external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-            image: "https://austingriffith.com/images/paintings/rhino.jpg",
-            name: "Rhino",
-            attributes: [
-                {
-                    trait_type: "BackgroundColor",
-                    value: "pink",
-                },
-                {
-                    trait_type: "Eyes",
-                    value: "googly",
-                },
-                {
-                    trait_type: "Stamina",
-                    value: 22,
-                },
-            ],
-        },
-        4: {
-            description: "Is that an underbyte?",
-            external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-            image: "https://austingriffith.com/images/paintings/fish.jpg",
-            name: "Fish",
-            attributes: [
-                {
-                    trait_type: "BackgroundColor",
-                    value: "blue",
-                },
-                {
-                    trait_type: "Eyes",
-                    value: "googly",
-                },
-                {
-                    trait_type: "Stamina",
-                    value: 15,
-                },
-            ],
-        },
-        5: {
-            description: "So delicate.",
-            external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-            image: "https://austingriffith.com/images/paintings/flamingo.jpg",
-            name: "Flamingo",
-            attributes: [
-                {
-                    trait_type: "BackgroundColor",
-                    value: "black",
-                },
-                {
-                    trait_type: "Eyes",
-                    value: "googly",
-                },
-                {
-                    trait_type: "Stamina",
-                    value: 6,
-                },
-            ],
-        },
-        6: {
-            description: "Raaaar!",
-            external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
-            image: "https://austingriffith.com/images/paintings/godzilla.jpg",
-            name: "Godzilla",
-            attributes: [
-                {
-                    trait_type: "BackgroundColor",
-                    value: "orange",
-                },
-                {
-                    trait_type: "Eyes",
-                    value: "googly",
-                },
-                {
-                    trait_type: "Stamina",
-                    value: 99,
-                },
-            ],
-        },
-    };
-
 
     const mintItem = async () => {
-        // upload to ipfs
-        const uploaded = await ipfs.add(JSON.stringify(json[count]));
-        setCount(count + 1);
-        console.log("Uploaded Hash: ", uploaded);
         const result = tx(
             writeContracts &&
             writeContracts.EventFactory &&
-            writeContracts.EventFactory.create(address, "event"+count),
+            writeContracts.EventFactory.create(address, "event of " + address),
             update => {
                 console.log("📡 Transaction Update:", update);
                 if (update && (update.status === "confirmed" || update.status === 1)) {
@@ -239,34 +108,8 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
             loading: true,
             items: [],
         });
-        const balance = (await readContracts.Event.balanceOf(address)).toNumber();
-        console.log("YOUR BALANCE:", balance)
-        const collectibleUpdate = [];
-        for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
-            try {
-                console.log("GEtting token index", tokenIndex);
-                const tokenId = await readContracts.YourCollectible.tokenOfOwnerByIndex(address, tokenIndex);
-                console.log("tokenId", tokenId);
-                const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
-                console.log("tokenURI", tokenURI);
-
-                const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-                console.log("ipfsHash", ipfsHash);
-
-                const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
-                try {
-                    const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-                    console.log("jsonManifest", jsonManifest);
-                    collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
-                } catch (e) {
-                    console.log(e);
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
-        setYourCollectibles(collectibleUpdate);
+        const balance = (await readContracts.EventFactory.balanceOf(address)).toNumber();
+        console.log("YOUR BALANCE:", address)
         const tokensPromises = [];
         for (let i = 0; i < balance; i += 1) {
             tokensPromises.push({ id: i, uri: await getTokenURI(address, i), owner: address });
@@ -279,7 +122,7 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
     };
 
     useEffect(() => {
-        if (readContracts.Event) loadCollection();
+        if (readContracts.EventFactory) loadCollection();
     }, [address, readContracts, writeContracts]);
 
     console.log("collection.items", collection.items)
@@ -298,49 +141,20 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
                             bordered
                             dataSource={collection.items}
                             renderItem={item => {
-                                const id = item.uri.id.toNumber();;
+                                const id = item.id;
                                 return (
-                                    <List.Item key={id + "_" + item.uri + "_" + item.uri.owner}>
+                                    <List.Item key={id + "_" + item.owner}>
                                         <Card
                                             title={
                                                 <div>
-                                                    <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.uri.name}
+                                                    <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.owner}
                                                 </div>
                                             }
                                         >
                                             <div>
-                                                <img src={item.uri.image} style={{ maxWidth: 150 }} />
+                                                EVENT ID: {item.uri}
                                             </div>
-                                            <div>{item.uri.description}</div>
                                         </Card>
-
-                                        <div>
-                                            owner:{" "}
-                                            <Address
-                                                address={item.owner}
-                                                ensProvider={mainnetProvider}
-                                                blockExplorer={blockExplorer}
-                                                fontSize={16}
-                                            />
-                                            <AddressInput
-                                                ensProvider={mainnetProvider}
-                                                placeholder="transfer to address"
-                                                value={transferToAddresses[id]}
-                                                onChange={newValue => {
-                                                    const update = {};
-                                                    update[id] = newValue;
-                                                    setTransferToAddresses({ ...transferToAddresses, ...update });
-                                                }}
-                                            />
-                                            <Button
-                                                onClick={() => {
-                                                    console.log("writeContracts", writeContracts);
-                                                    tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
-                                                }}
-                                            >
-                                                Transfer
-                                            </Button>
-                                        </div>
                                     </List.Item>
                                 );
                             }}
@@ -353,7 +167,7 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
                             mintItem();
                         }}
                     >
-                        BUY TICKET
+                        CREATE EVENT
                     </Button>
                 </>
             ) : (

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
-import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "../components";
+import { Account, Address, AddressInput, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "../components";
 import { ethers } from "ethers";
+import { Contract } from "@ethersproject/contracts";
 import axios from "axios";
 import {
     useBalance,
@@ -15,6 +16,8 @@ import {
 import { formatEther } from "@ethersproject/units";
 import { usePoller } from "eth-hooks";
 
+import EventABI from "../abi/Event.abi.json";
+
 const { BufferList } = require("bl");
 const ipfsAPI = require("ipfs-http-client");
 const ipfs = ipfsAPI({ host: "ipfs.infura.io", port: "5001", protocol: "https" });
@@ -26,7 +29,8 @@ const OPENSEA_LINK = "https://testnets.opensea.io/assets/"
 
 
 
-const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer }) => {
+const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer,
+    localProvider, userSigner, eventAdd }) => {
     const [collection, setCollection] = useState({
         loading: true,
         items: [],
@@ -34,17 +38,19 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
 
     const [minting, setMinting] = useState(false);
 
+    var eventContract = null;
+
     const [count, setCount] = useState(1);
     const [eventname, setName] = useState("");
 
 
     // keep track of a variable from the contract in the local React state:
-    const balance = useContractReader(readContracts, "Event", "balanceOf", [address]);
-    console.log("🤗 balanceeee:", balance);
+    //const balance = useContractReader(readContracts, "Event", "balanceOf", [address]);
+    //console.log("🤗 balanceeee:", balance);
 
     // keep track of a variable from the contract in the local React state:
-    const name = useContractReader(readContracts, "Event", "name");
-    console.log("🤗 event name:", name);
+    //const name = useContractReader(eventContract, "Event", "name");
+    //console.log("🤗 event name:", name);
 
     // 📟 Listen for broadcast events
     //const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
@@ -53,22 +59,34 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
     //
     // 🧠 This effect will update yourCollectibles by polling when your balance changes
     //
-    const yourBalance = balance && balance.toNumber && balance.toNumber();
+    //const yourBalance = balance && balance.toNumber && balance.toNumber();
     const [yourCollectibles, setYourCollectibles] = useState();
 
     const [transferToAddresses, setTransferToAddresses] = useState({});
 
     const getEventName = async () => {
-        const name = await readContracts.Event.getEventName();
+        const name = await eventContract.getEventName();
         console.log("name", name)
         setName(name);
     };
 
+    const getFromIPFS = async hashToGet => {
+        for await (const file of ipfs.get(hashToGet)) {
+            console.log(file.path);
+            if (!file.content) continue;
+            const content = new BufferList();
+            for await (const chunk of file.content) {
+                content.append(chunk);
+            }
+            console.log(content);
+            return content;
+        }
+    };
+
     const getTokenURI = async (ownerAddress, index) => {
-        await getEventName();
-        const id = await readContracts.Event.tokenOfOwnerByIndex(ownerAddress, index);
-        const tokenURI = await readContracts.Event.tokenURI(id);
-        console.log("tokenURI", tokenURI)
+        const id = await eventContract.tokenOfOwnerByIndex(ownerAddress, index);
+        const tokenURI = await eventContract.tokenURI(id);
+        //console.log("tokenURI", tokenURI)
         try {
             const metadata = await axios.get(tokenURI);
             if (metadata) {
@@ -204,51 +222,41 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         },
     };
 
+    const setContract = async () => {
+        if (eventContract == null)
+            eventContract = await new Contract(eventAdd, EventABI, userSigner);
+            await getEventName();
+    };
 
     const mintItem = async () => {
         // upload to ipfs
         const uploaded = await ipfs.add(JSON.stringify(json[count]));
         setCount(count + 1);
         console.log("Uploaded Hash: ", uploaded);
-        const result = tx(
-            writeContracts &&
-            writeContracts.Event &&
-            writeContracts.Event.mintItem(address, uploaded.path),
-            update => {
-                console.log("📡 Transaction Update:", update);
-                if (update && (update.status === "confirmed" || update.status === 1)) {
-                    console.log(" 🍾 Transaction " + update.hash + " finished!");
-                    console.log(
-                        " ⛽️ " +
-                        update.gasUsed +
-                        "/" +
-                        (update.gasLimit || update.gas) +
-                        " @ " +
-                        parseFloat(update.gasPrice) / 1000000000 +
-                        " gwei",
-                    );
-                    loadCollection();
-                }
-            },
-        );
+        console.log("eventContract: ", eventContract);
+        await setContract();
+        await eventContract.mintItem(address, uploaded.path)
+        loadCollection();
     };
 
     const loadCollection = async () => {
+        await setContract();
+        console.log("eventContract:", eventContract)
         if (!address || !readContracts || !writeContracts) return;
         setCollection({
             loading: true,
             items: [],
         });
-        const balance = (await readContracts.Event.balanceOf(address)).toNumber();
-        console.log("YOUR BALANCE:", balance)
+        const balance = (await eventContract.balanceOf(address)).toNumber();
+        //console.log("YOUR BALANCE:", balance)
         const collectibleUpdate = [];
         for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
             try {
-                console.log("GEtting token index", tokenIndex);
-                const tokenId = await readContracts.YourCollectible.tokenOfOwnerByIndex(address, tokenIndex);
-                console.log("tokenId", tokenId);
-                const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
-                console.log("tokenURI", tokenURI);
+                // console.log("GEtting token index", tokenIndex);
+                const tokenId = await eventContract.tokenOfOwnerByIndex(address, tokenIndex);
+                // console.log("tokenId", tokenId);
+                const tokenURI = await eventContract.tokenURI(tokenId);
+                //  console.log("tokenURI", tokenURI);
 
                 const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
                 console.log("ipfsHash", ipfsHash);
@@ -279,7 +287,7 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
     };
 
     useEffect(() => {
-        if (readContracts.Event) loadCollection();
+        if (eventContract == null) loadCollection();
     }, [address, readContracts, writeContracts]);
 
     console.log("collection.items", collection.items)

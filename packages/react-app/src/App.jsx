@@ -274,8 +274,8 @@ function App(props) {
   ]);
 
   // keep track of a variable from the contract in the local React state:
-  const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
-  console.log("🤗 balanceeee:", balance);
+  const totalEvents = useContractReader(readContracts, "EventFactory", "getTotalEvents");
+  console.log("🤗 totalEvents:", totalEvents);
 
   // 📟 Listen for broadcast events
   //const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
@@ -284,29 +284,28 @@ function App(props) {
   //
   // 🧠 This effect will update yourCollectibles by polling when your balance changes
   //
-  const yourBalance = balance && balance.toNumber && balance.toNumber();
+  const yourBalance = totalEvents && totalEvents.toNumber && totalEvents.toNumber();
   const [yourCollectibles, setYourCollectibles] = useState();
+  console.log("yourCollectibles:", yourCollectibles)
+
 
   useEffect(() => {
     const updateYourCollectibles = async () => {
       const collectibleUpdate = [];
-      for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
+      console.log("yourBalance:", yourBalance);
+      for (let tokenIndex = 0; tokenIndex < yourBalance; tokenIndex++) {
         try {
-          console.log("GEtting token index", tokenIndex);
-          const tokenId = await readContracts.YourCollectible.tokenOfOwnerByIndex(address, tokenIndex);
-          console.log("tokenId", tokenId);
-          const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
-          console.log("tokenURI", tokenURI);
-
-          const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-          console.log("ipfsHash", ipfsHash);
-
-          const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
+          console.log("token index", tokenIndex);
+          const id = await readContracts.EventFactory.tokenByIndex(tokenIndex);
+          console.log("token", id);
+          const tokenURI = await readContracts.EventFactory.tokenURI(id);
+          console.log("tokenURI", tokenURI)
+          const event = await readContracts.EventFactory.getEvent(tokenURI - 1);
+          console.log("event address", event.eAddr)
+          //var eventContract = await ethers.getContractAt('Event', event.eAddr)
+          //console.log("eventContract", eventContract)
           try {
-            const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-            console.log("jsonManifest", jsonManifest);
-            collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
+            collectibleUpdate.push({ id: tokenIndex, eventAdd: event.eAddr });
           } catch (e) {
             console.log(e);
           }
@@ -563,33 +562,35 @@ function App(props) {
         </Menu>
         <Switch>
           <Route exact path="/">
-          <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-            {address ? (
-              <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-                <EventsUI
-                  loadWeb3Modal={loadWeb3Modal}
-                  address={address}
-                  tx={tx}
-                  writeContracts={writeContracts}
-                  readContracts={readContracts}
-                  mainnetProvider={mainnetProvider}
-                  blockExplorer={blockExplorer}
-                />
-                <EventsUI
-                  loadWeb3Modal={loadWeb3Modal}
-                  address={address}
-                  tx={tx}
-                  writeContracts={writeContracts}
-                  readContracts={readContracts}
-                  mainnetProvider={mainnetProvider}
-                  blockExplorer={blockExplorer}
-                />
-              </div>
-            ) : (
-              <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
-                Connect Ethereum Wallet To Mint
-              </Button>
-            )}
+            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              {address ? (
+                <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+                  <List
+                    bordered
+                    dataSource={yourCollectibles}
+                    renderItem={item => {
+                      return (
+                      <EventsUI
+                        loadWeb3Modal={loadWeb3Modal}
+                        address={address}
+                        tx={tx}
+                        writeContracts={writeContracts}
+                        readContracts={readContracts}
+                        mainnetProvider={mainnetProvider}
+                        blockExplorer={blockExplorer}
+                        provider={localProvider}
+                        userSigner={userSigner}
+                        eventAdd={item.eventAdd}
+                      />
+                      );
+                    }}
+                  />
+                </div>
+              ) : (
+                <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
+                  Connect Ethereum Wallet To Mint
+                </Button>
+              )}
             </div>
           </Route>
           <Route path="/debugcontracts">
@@ -604,15 +605,15 @@ function App(props) {
             />
           </Route>
           <Route path="/createEvent">
-          <YourEvents
-                  loadWeb3Modal={loadWeb3Modal}
-                  address={address}
-                  tx={tx}
-                  writeContracts={writeContracts}
-                  readContracts={readContracts}
-                  mainnetProvider={mainnetProvider}
-                  blockExplorer={blockExplorer}
-                />
+            <YourEvents
+              loadWeb3Modal={loadWeb3Modal}
+              address={address}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              mainnetProvider={mainnetProvider}
+              blockExplorer={blockExplorer}
+            />
           </Route>
         </Switch>
       </BrowserRouter>

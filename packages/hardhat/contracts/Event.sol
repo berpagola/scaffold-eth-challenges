@@ -15,10 +15,12 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     Counters.Counter private _tokenIdCounter;
     string public eventName;
     address public eventOwner;
+    address public eventAddr;
 
     constructor(address _eventOwner, string memory _eventName) ERC721(_eventName, "CIV") payable {
         eventName = _eventName;
         eventOwner = _eventOwner;
+        eventAddr = address(this);
     }
 
     function setEventName(string memory _eventName) 
