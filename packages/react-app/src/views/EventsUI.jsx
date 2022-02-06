@@ -280,6 +280,21 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
             });
     };
 
+    const useTicket = async (id) => {
+        // upload to ipfs
+        await setContract();
+        console.log("eventContract: ", eventContract);
+        //await eventContract.mintItem(address, uploaded.path)
+        tx(eventContract.useTicket(id),
+            update => {
+                console.log("📡 Transaction Update:", update);
+                if (update && (update.status === "confirmed" || update.status === 1)) {
+                    console.log(" 🍾 Transaction " + update.hash + " finished!");
+                    loadCollection();
+                }
+            });
+    };
+
     const loadCollection = async () => {
         await setContract();
         console.log("eventContract:", eventContract)
@@ -291,34 +306,16 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         const balance = (await eventContract.balanceOf(address)).toNumber();
         //console.log("YOUR BALANCE:", balance)
         const collectibleUpdate = [];
-        for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
-            try {
-                // console.log("GEtting token index", tokenIndex);
-                const tokenId = await eventContract.tokenOfOwnerByIndex(address, tokenIndex);
-                // console.log("tokenId", tokenId);
-                const tokenURI = await eventContract.tokenURI(tokenId);
-                //  console.log("tokenURI", tokenURI);
 
-                const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-                console.log("ipfsHash", ipfsHash);
-
-                const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
-                try {
-                    const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-                    console.log("jsonManifest", jsonManifest);
-                    collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
-                } catch (e) {
-                    console.log(e);
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
         setYourCollectibles(collectibleUpdate);
         const tokensPromises = [];
         for (let i = 0; i < balance; i += 1) {
-            tokensPromises.push({ id: i, uri: await getTokenURI(address, i), owner: address });
+            const tokenId = await eventContract.tokenOfOwnerByIndex(address, i);
+            const tokenURI = await eventContract.tokenURI(tokenId);
+            //  console.log("tokenURI", tokenURI);
+            const isUsed = await eventContract.isUsed(tokenId);
+            console.log("IS TICKET USED:", isUsed);
+            tokensPromises.push({ id: i, uri: await getTokenURI(address, i), owner: address, isUsed: isUsed ? "YES" : "NO" });
         }
         const tokens = await Promise.all(tokensPromises);
         setCollection({
@@ -367,6 +364,18 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
                                             </Card>
 
                                             <div>
+                                                <div>
+                                                    <div>Ticket used: {item.isUsed}</div>
+
+                                                    <Button
+                                                        onClick={() => {
+                                                            useTicket(id);
+                                                        }}
+                                                    >
+                                                        Use Ticket
+                                                    </Button>
+                                                </div>
+
                                                 owner:{" "}
                                                 <Address
                                                     address={item.owner}

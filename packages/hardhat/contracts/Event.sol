@@ -13,6 +13,9 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
+    // Mapping from token ID to used ticket
+    mapping(uint256 => bool) private _usedTickets;
+
     Counters.Counter private _tokenIdCounter;
     string public eventName;
     address public eventOwner;
@@ -20,6 +23,7 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     uint256 private ticketLimit;
     uint256 private ticketsPerWalletLimit;
     uint256 private ticketPrice;
+    bool private ticketUsed;
 
     constructor(
         address _eventOwner,
@@ -75,6 +79,17 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         payable_addr.transfer(address(this).balance);
     }
 
+    function useTicket(uint256 tokenId) public {
+        address owner = ERC721.ownerOf(tokenId);
+        require(msg.sender == owner, "NOT TICKET OWNER");
+        require(_usedTickets[tokenId] == false, "TCKET ALREADY USED");
+        _usedTickets[tokenId] = true;
+    }
+
+    function isUsed(uint256 tokenId) public view returns (bool) {
+        return _usedTickets[tokenId];
+    }
+
     function mintItem(address to, string memory uri)
         public
         payable
@@ -100,6 +115,7 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
             ticketsOfUser < currentTicketsPerWalletLimit,
             "CAN'T BUY MORE TICKETS WITH THIS WALLET"
         );
+        _usedTickets[tokenId] = false;
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         return tokenId;
