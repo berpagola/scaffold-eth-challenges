@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
 import { Account, Address, AddressInput, Contract, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "../components";
 import EventABI from "../abi/Event.abi.json";
+import YourSingleEventUI from "./YourSingleEventUI";
 
 const { utils, BigNumber } = require("ethers");
 import { ethers } from "ethers";
@@ -86,7 +87,7 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
         let eventName = eventContract.getEventName();
         let ticketLimit = eventContract.getTicketLimit();
         //await getEventName();
-        return { eventName: eventName, ticketLimit:ticketLimit };
+        return { eventName: eventName, ticketLimit: ticketLimit };
 
     };
 
@@ -133,7 +134,7 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
             console.log("tokenURI", tokenURI)
             const event = await readContracts.EventFactory.getEvent(tokenURI - 1);
             console.log("event address", event.eAddr)
-            tokensPromises.push({ id: i, uri: await getTokenURI(address, i), owner: address});//, event: await getEventData(event.eAddr) });//eventName: eventName, ticketLimit: ticketLimit });
+            tokensPromises.push({ id: i, uri: await getTokenURI(address, i), eventAddress: event.eAddr });//, event: await getEventData(event.eAddr) });//eventName: eventName, ticketLimit: ticketLimit });
         }
         const tokens = await Promise.all(tokensPromises);
         setCollection({
@@ -157,34 +158,28 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
         <div style={{ maxWidth: 768, margin: "20px auto", paddingBottom: 25 }}>
             {address ? (
                 <>
-                    <div style={{ width: 640, margin: "auto", marginTop: 2, paddingBottom: 32 }}>
-                        <div style={{ padding: 32, width: 400, margin: "auto" }}>
-                            <div>Event name: {eventname}</div>
-                            
-                        </div>
+                    {
                         <List
                             bordered
                             dataSource={collection.items}
                             renderItem={item => {
-                                const id = item.id;
                                 return (
-                                    <List.Item key={id + "_" + item.owner}>
-                                        <Card
-                                            title={
-                                                <div>
-                                                    <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.owner}
-                                                </div>
-                                            }
-                                        >
-                                            <div>
-                                                EVENT ID: {item.uri}
-                                            </div>
-                                        </Card>
-                                    </List.Item>
+                                    <YourSingleEventUI
+                                        loadWeb3Modal={loadWeb3Modal}
+                                        address={address}
+                                        tx={tx}
+                                        writeContracts={writeContracts}
+                                        readContracts={readContracts}
+                                        mainnetProvider={mainnetProvider}
+                                        blockExplorer={blockExplorer}
+                                        userSigner={userSigner}
+                                        eventAdd={item.eventAddress}
+                                    />
                                 );
                             }}
                         />
-                    </div>
+
+                    }
                     <div style={{ maxWidth: 350, margin: "20px auto" }}>
                         <h2 style={{ marginBottom: "20px" }}>New Event</h2>
                         <div style={{ display: "flex", alignItems: "center", maxWidth: 350, margin: "0 auto", marginBottom: "10px" }}>

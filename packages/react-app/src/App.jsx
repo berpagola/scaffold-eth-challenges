@@ -25,6 +25,7 @@ import { Transactor } from "./helpers";
 import { useContractConfig } from "./hooks";
 // import Hints from "./Hints";
 import EventsUI from "./views/EventsUI";
+import BuyEventsUI from "./views/BuyEventsUI";
 import YourEvents from "./views/YourEvents";
 
 const { BufferList } = require("bl");
@@ -529,14 +530,34 @@ function App(props) {
       {networkDisplay}
       <BrowserRouter>
         <Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
-          <Menu.Item key="/">
+        <Menu.Item key="/">
             <Link
               onClick={() => {
                 setRoute("/");
               }}
               to="/"
             >
-              Your Tickets
+              Get Tickets
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="/yourTickets">
+            <Link
+              onClick={() => {
+                setRoute("/yourTickets");
+              }}
+              to="/yourTickets"
+            >
+              My Tickets
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="/yourEvents">
+            <Link
+              onClick={() => {
+                setRoute("/yourEvents");
+              }}
+              to="/createEvent"
+            >
+              My Events
             </Link>
           </Menu.Item>
           <Menu.Item key="/debugcontracts">
@@ -549,19 +570,41 @@ function App(props) {
               Debug Contracts
             </Link>
           </Menu.Item>
-          <Menu.Item key="/yourEvents">
-            <Link
-              onClick={() => {
-                setRoute("/yourEvents");
-              }}
-              to="/createEvent"
-            >
-              Your Events
-            </Link>
-          </Menu.Item>
         </Menu>
         <Switch>
           <Route exact path="/">
+            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              {address ? (
+                <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+                  <List
+                    bordered
+                    dataSource={yourCollectibles}
+                    renderItem={item => {
+                      return (
+                      <BuyEventsUI
+                        loadWeb3Modal={loadWeb3Modal}
+                        address={address}
+                        tx={tx}
+                        writeContracts={writeContracts}
+                        readContracts={readContracts}
+                        mainnetProvider={mainnetProvider}
+                        blockExplorer={blockExplorer}
+                        provider={localProvider}
+                        userSigner={userSigner}
+                        eventAdd={item.eventAdd}
+                      />
+                      );
+                    }}
+                  />
+                </div>
+              ) : (
+                <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
+                  Connect Ethereum Wallet To Mint
+                </Button>
+              )}
+            </div>
+          </Route>
+          <Route exact path="/yourTickets">
             <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
               {address ? (
                 <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>

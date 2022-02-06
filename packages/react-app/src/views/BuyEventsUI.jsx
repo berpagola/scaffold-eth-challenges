@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
+import { Alert, Button, Card, Col, Input, List, Menu, Row, Divider } from "antd";
 import { Account, Address, AddressInput, Faucet, GasGauge, Header, Ramp, ThemeSwitch } from "../components";
 import { ethers } from "ethers";
 import { Contract } from "@ethersproject/contracts";
@@ -29,7 +29,7 @@ const OPENSEA_LINK = "https://testnets.opensea.io/assets/"
 
 
 
-const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer,
+const BuyEventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer,
     localProvider, userSigner, eventAdd }) => {
     const [collection, setCollection] = useState({
         loading: true,
@@ -45,7 +45,15 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
     const [eventLimit, setLimit] = useState("");
     const [eventTicketsSold, setSold] = useState("");
     const [eventTicketPrice, setPrice] = useState("");
+    const [ticketsPerWallet, setWalletLimit] = useState("");
+    const [contractBalance, setBalanceETH] = useState("");
 
+
+
+    // keep track of a variable from the contract in the local React state:
+    const balance = useContractReader(eventContract, "balanceOf", [address]);
+    console.log("🤗 balance of event:", balance);
+    console.log("🤗 balance of event contract:", eventContract);
 
     // keep track of a variable from the contract in the local React state:
     //const balance = useContractReader(readContracts, "Event", "balanceOf", [address]);
@@ -67,6 +75,15 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
 
     const [transferToAddresses, setTransferToAddresses] = useState({});
 
+
+
+
+    const getEventBalance = async () => {
+        const balanceETH = await eventContract.getBalance();
+        console.log("balanceETH", balanceETH)
+        setBalanceETH(ethers.utils.formatUnits(balanceETH, 18));
+    };
+
     const getEventName = async () => {
         const name = await eventContract.getEventName();
         console.log("name", name)
@@ -83,6 +100,12 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         const sold = await eventContract.getTicketsSold();
         console.log("sold", sold)
         setSold(ethers.utils.formatUnits(sold, 0));
+    };
+
+    const getTicketsPerWalletLimit = async () => {
+        const walletLimit = await eventContract.getTicketsPerWalletLimit();
+        console.log("walletLimit", walletLimit)
+        setWalletLimit(ethers.utils.formatUnits(walletLimit, 0));
     };
 
     const getTicketPrice = async () => {
@@ -242,6 +265,11 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
             ],
         },
     };
+    const getContract = async () => {
+        if (eventContract == null)
+            eventContract = await new Contract(eventAdd, EventABI, userSigner);
+        return eventContract;
+    };
 
     const setContract = async () => {
         if (eventContract == null)
@@ -250,10 +278,13 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         await getEventLimit();
         await getTicketsSold();
         await getTicketPrice();
+        await getTicketsPerWalletLimit();
+        await getEventBalance();
     };
 
     const mintItem = async () => {
         // upload to ipfs
+        
         const uploaded = await ipfs.add(JSON.stringify(json[count]));
         setCount(count + 1);
         console.log("Uploaded Hash: ", uploaded);
@@ -261,23 +292,27 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         await setContract();
         let price = eventContract.getTicketPrice();
         //await eventContract.mintItem(address, uploaded.path)
-        tx(eventContract.mintItem(address, uploaded.path, { value: price }));
-        loadCollection();
-    };
-
-    const transferTicket = async (address, destinationAddress, id) => {
-        // upload to ipfs
-        await setContract();
-        console.log("eventContract: ", eventContract);
-        //await eventContract.mintItem(address, uploaded.path)
-        tx(eventContract.transferFrom(address, destinationAddress, id),
+        tx(eventContract.mintItem(address, uploaded.path, { value: price }),
             update => {
                 console.log("📡 Transaction Update:", update);
                 if (update && (update.status === "confirmed" || update.status === 1)) {
                     console.log(" 🍾 Transaction " + update.hash + " finished!");
                     loadCollection();
                 }
-            });
+            },
+        );
+        /*
+        await setContract();
+        tx(eventContract.withdraw(),
+            update => {
+                console.log("📡 Transaction Update:", update);
+                if (update && (update.status === "confirmed" || update.status === 1)) {
+                    console.log(" 🍾 Transaction " + update.hash + " finished!");
+                    loadCollection();
+                }
+            },
+        );
+        */
     };
 
     const loadCollection = async () => {
@@ -328,86 +363,50 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
     };
 
     useEffect(() => {
-        loadCollection();
+        if (readContracts.EventFactory) loadCollection();
     }, [address, readContracts, writeContracts]);
 
     console.log("collection.items", collection.items)
+    console.log("collection.items", collection.items.lenght)
 
 
     return (
-        (collection.items.length > 0) ?
-            <div style={{ maxWidth: 768, margin: "20px auto", paddingBottom: 25 }}>
-                {address ? (
-                    <>
-                        <div style={{ width: 640, margin: "auto", marginTop: 2, paddingBottom: 32 }}>
-                            <div style={{ padding: 32, width: 400, margin: "auto" }}>
-                                <div>Event name: {eventname}</div>
-                                <div>Event limit: {eventLimit}</div>
-                                <div>Tickets sold: {eventTicketsSold}</div>
-                                <div>Tickets price: {eventTicketPrice}</div>
-                            </div>
-                            <List
-                                bordered
-                                dataSource={collection.items}
-                                renderItem={item => {
-                                    const id = item.uri.id.toNumber();;
-                                    return (
-                                        <List.Item key={id + "_" + item.uri + "_" + item.uri.owner}>
-                                            <Card
-                                                title={
-                                                    <div>
-                                                        <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.uri.name}
-                                                    </div>
-                                                }
-                                            >
-                                                <div>
-                                                    <img src={item.uri.image} style={{ maxWidth: 150 }} />
-                                                </div>
-                                                <div>{item.uri.description}</div>
-                                            </Card>
-
-                                            <div>
-                                                owner:{" "}
-                                                <Address
-                                                    address={item.owner}
-                                                    ensProvider={mainnetProvider}
-                                                    blockExplorer={blockExplorer}
-                                                    fontSize={16}
-                                                />
-                                                <AddressInput
-                                                    ensProvider={mainnetProvider}
-                                                    placeholder="transfer to address"
-                                                    value={transferToAddresses[id]}
-                                                    onChange={newValue => {
-                                                        const update = {};
-                                                        update[id] = newValue;
-                                                        setTransferToAddresses({ ...transferToAddresses, ...update });
-                                                    }}
-                                                />
-                                                <Button
-                                                    onClick={() => {
-                                                        transferTicket(address, transferToAddresses[id], id);
-                                                    }}
-                                                >
-                                                    Transfer
-                                                </Button>
-                                            </div>
-                                        </List.Item>
-                                    );
-                                }}
-                            />
+        <div style={{ maxWidth: 768, margin: "20px auto", paddingBottom: 25 }}>
+            {address ? (
+                <>
+                    <div style={{ width: 640, margin: "auto", marginTop: 2, paddingBottom: 32 }}>
+                        <div style={{ padding: 32, width: 400, margin: "auto" }}>
+                            <div>Event name: {eventname}</div>
+                            <div>Event limit: {eventLimit}</div>
+                            <div>Tickets sold: {eventTicketsSold}</div>
+                            <div>Tickets price: {eventTicketPrice}</div>
+                            <div>Tickets per wallet: {ticketsPerWallet}</div>
                         </div>
-                    </>
-                ) : (
-                    <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
-                        Connect Ethereum Wallet To Mint
+                        <div style={{ padding: 32, width: 400, margin: "auto" }}>
+                            <div>Your tickets: {collection.items.length}</div>
+                            <div>Contract balance: {contractBalance}</div>
+                        </div>
+                    </div>
+                    <Button
+                        style={{ marginTop: 15 }}
+                        type="primary"
+                        onClick={() => {
+                            mintItem();
+                        }}
+                    >
+                        BUY TICKET
                     </Button>
-                )}
-            </div>
-            :
-            <div></div>
+
+                    <Divider />
+                </>
+            ) : (
+                <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
+                    Connect Ethereum Wallet To Mint
+                </Button>
+            )}
+        </div>
 
     );
 };
 
-export default EventsUI;
+export default BuyEventsUI;

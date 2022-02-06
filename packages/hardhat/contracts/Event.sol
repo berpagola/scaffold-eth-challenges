@@ -21,7 +21,13 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     uint256 private ticketsPerWalletLimit;
     uint256 private ticketPrice;
 
-    constructor(address _eventOwner, string memory _eventName, uint256 _ticketLimit, uint256 _ticketsPerWalletLimit, uint256 _ticketPrice) ERC721(_eventName, "CIV") payable {
+    constructor(
+        address _eventOwner,
+        string memory _eventName,
+        uint256 _ticketLimit,
+        uint256 _ticketsPerWalletLimit,
+        uint256 _ticketPrice
+    ) payable ERC721(_eventName, "CIV") {
         eventName = _eventName;
         eventOwner = _eventOwner;
         ticketLimit = _ticketLimit;
@@ -30,45 +36,32 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         eventAddr = address(this);
     }
 
-    function setEventName(string memory _eventName) 
-        public 
-    {
+    function setEventName(string memory _eventName) public {
         require(msg.sender == eventOwner, "NOT EVENT OWNER!!");
         eventName = _eventName;
     }
 
-    function  getEventName() 
-        public view
-        returns (string memory)
-    {
+    function getEventName() public view returns (string memory) {
         return (eventName);
     }
 
-    function  getTicketLimit() 
-        public view
-        returns (uint256)
-    {
+    function getBalance() public view returns (uint256) {
+        return (address(this).balance);
+    }
+
+    function getTicketLimit() public view returns (uint256) {
         return (ticketLimit);
     }
 
-    function  getTicketPrice() 
-        public view
-        returns (uint256)
-    {
+    function getTicketPrice() public view returns (uint256) {
         return (ticketPrice);
     }
 
-    function  getTicketsSold() 
-        public view
-        returns (uint256)
-    {
+    function getTicketsSold() public view returns (uint256) {
         return (_tokenIdCounter.current());
     }
 
-    function  getTicketsPerWalletLimit() 
-        public view
-        returns (uint256)
-    {
+    function getTicketsPerWalletLimit() public view returns (uint256) {
         return (ticketsPerWalletLimit);
     }
 
@@ -76,7 +69,17 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         return "https://ipfs.io/ipfs/";
     }
 
-    function mintItem(address to, string memory uri) public payable returns (uint256) {
+    function withdraw() public {
+        require(msg.sender == eventOwner, "NOT EVENT OWNER");
+        address payable payable_addr = payable(msg.sender);
+        payable_addr.transfer(address(this).balance);
+    }
+
+    function mintItem(address to, string memory uri)
+        public
+        payable
+        returns (uint256)
+    {
         _tokenIdCounter.increment();
         console.log("current", _tokenIdCounter.current());
         console.log("ticketLimit", ticketLimit);
@@ -87,10 +90,16 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         uint256 tokenId = _tokenIdCounter.current();
         require(tokenId <= ticketLimit, "NO MORE TICKETS FOR THIS EVENT");
         uint256 currentTicketsPerWalletLimit = ticketsPerWalletLimit;
-        console.log("currentTicketsPerWalletLimit", currentTicketsPerWalletLimit);
+        console.log(
+            "currentTicketsPerWalletLimit",
+            currentTicketsPerWalletLimit
+        );
         uint256 ticketsOfUser = balanceOf(to);
         console.log("ticketsOfUser", ticketsOfUser);
-        require(ticketsOfUser < currentTicketsPerWalletLimit, "CAN'T BUY MORE TICKETS WITH THIS WALLET");
+        require(
+            ticketsOfUser < currentTicketsPerWalletLimit,
+            "CAN'T BUY MORE TICKETS WITH THIS WALLET"
+        );
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         return tokenId;
