@@ -30,18 +30,13 @@ const OPENSEA_LINK = "https://testnets.opensea.io/assets/"
 
 
 const YourSingleEventUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer,
-     userSigner, eventAdd }) => {
-    const [collection, setCollection] = useState({
-        loading: true,
-        items: [],
-    });
-
-    const [minting, setMinting] = useState(false);
+    userSigner, eventAdd, tokenId }) => {
 
     var eventContract = null;
 
-    const [count, setCount] = useState(1);
     const [eventname, setName] = useState("");
+    const [eventUri, setUri] = useState("");
+    const [eventMetadata, setMetadata] = useState("");
     const [eventLimit, setLimit] = useState("");
     const [eventTicketsSold, setSold] = useState("");
     const [eventTicketPrice, setPrice] = useState("");
@@ -52,100 +47,56 @@ const YourSingleEventUI = ({ loadWeb3Modal, address, tx, readContracts, writeCon
 
     // keep track of a variable from the contract in the local React state:
     const balance = useContractReader(eventContract, "balanceOf", [address]);
-    console.log("🤗 balance of event:", balance);
-    console.log("🤗 balance of event contract:", eventContract);
-
-    // keep track of a variable from the contract in the local React state:
-    //const balance = useContractReader(readContracts, "Event", "balanceOf", [address]);
-    //console.log("🤗 balanceeee:", balance);
-
-    // keep track of a variable from the contract in the local React state:
-    //const name = useContractReader(eventContract, "Event", "name");
-    //console.log("🤗 event name:", name);
-
-    // 📟 Listen for broadcast events
-    //const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
-    //console.log("📟 Transfer events:", transferEvents);
-
-    //
-    // 🧠 This effect will update yourCollectibles by polling when your balance changes
-    //
-    //const yourBalance = balance && balance.toNumber && balance.toNumber();
-    const [yourCollectibles, setYourCollectibles] = useState();
-
-    const [transferToAddresses, setTransferToAddresses] = useState({});
-
 
 
 
     const getEventBalance = async () => {
         const balanceETH = await eventContract.getBalance();
-        console.log("balanceETH", balanceETH)
+        //console.log("balanceETH", balanceETH)
         setBalanceETH(ethers.utils.formatUnits(balanceETH, 18));
     };
 
     const getEventName = async () => {
         const name = await eventContract.getEventName();
-        console.log("name", name)
+        //console.log("eventUri", eventUri)
         setName(name);
+    };
+
+    const getEventUri = async () => {
+        const uri = await readContracts.EventFactory.tokenURI(tokenId);
+        console.log("eventUri", uri)
+        setUri(uri);
+        try {
+            const metadata = await axios.get(uri);
+            console.log("metadata single event", metadata);
+            if (metadata) {
+                setMetadata(metadata.data);
+            }
+        } catch (e) { console.log(e) }
     };
 
     const getEventLimit = async () => {
         const limit = await eventContract.getTicketLimit();
-        console.log("limit", limit)
+        //console.log("limit", limit)
         setLimit(ethers.utils.formatUnits(limit, 0));
     };
 
     const getTicketsSold = async () => {
         const sold = await eventContract.getTicketsSold();
-        console.log("sold", sold)
+        //console.log("sold", sold)
         setSold(ethers.utils.formatUnits(sold, 0));
     };
 
     const getTicketsPerWalletLimit = async () => {
         const walletLimit = await eventContract.getTicketsPerWalletLimit();
-        console.log("walletLimit", walletLimit)
+        //console.log("walletLimit", walletLimit)
         setWalletLimit(ethers.utils.formatUnits(walletLimit, 0));
     };
 
     const getTicketPrice = async () => {
         const price = await eventContract.getTicketPrice();
-        console.log("price", price)
+        //console.log("price", price)
         setPrice(ethers.utils.formatUnits(price, 18));
-    };
-
-    const getFromIPFS = async hashToGet => {
-        for await (const file of ipfs.get(hashToGet)) {
-            console.log(file.path);
-            if (!file.content) continue;
-            const content = new BufferList();
-            for await (const chunk of file.content) {
-                content.append(chunk);
-            }
-            console.log(content);
-            return content;
-        }
-    };
-
-    const getTokenURI = async (ownerAddress, index) => {
-        const id = await eventContract.tokenOfOwnerByIndex(ownerAddress, index);
-        const tokenURI = await eventContract.tokenURI(id);
-        //console.log("tokenURI", tokenURI)
-        try {
-            const metadata = await axios.get(tokenURI);
-            if (metadata) {
-                return { ...metadata.data, id, tokenURI /*, approved: approved === writeContracts.GigaNFT.address */ };
-            }
-        } catch (e) { console.log(e) }
-
-        //console.log("metadata",metadata.data)
-        //const approved = await readContracts.GigaNFT.getApproved(id);
-
-    };
-    const getContract = async () => {
-        if (eventContract == null)
-            eventContract = await new Contract(eventAdd, EventABI, userSigner);
-        return eventContract;
     };
 
     const setContract = async () => {
@@ -157,10 +108,11 @@ const YourSingleEventUI = ({ loadWeb3Modal, address, tx, readContracts, writeCon
         await getTicketPrice();
         await getTicketsPerWalletLimit();
         await getEventBalance();
+        await getEventUri();
     };
 
     const withdrawFunds = async () => {
-        
+
         await setContract();
         tx(eventContract.withdraw(),
             update => {
@@ -171,68 +123,27 @@ const YourSingleEventUI = ({ loadWeb3Modal, address, tx, readContracts, writeCon
                 }
             },
         );
-        
+
     };
 
     const loadCollection = async () => {
         await setContract();
-        console.log("eventContract:", eventContract)
-        if (!address || !readContracts || !writeContracts) return;
-        setCollection({
-            loading: true,
-            items: [],
-        });
-        const balance = (await eventContract.balanceOf(address)).toNumber();
-        //console.log("YOUR BALANCE:", balance)
-        const collectibleUpdate = [];
-        for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
-            try {
-                // console.log("GEtting token index", tokenIndex);
-                const tokenId = await eventContract.tokenOfOwnerByIndex(address, tokenIndex);
-                // console.log("tokenId", tokenId);
-                const tokenURI = await eventContract.tokenURI(tokenId);
-                //  console.log("tokenURI", tokenURI);
 
-                const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-                console.log("ipfsHash", ipfsHash);
-
-                const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
-                try {
-                    const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-                    console.log("jsonManifest", jsonManifest);
-                    collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
-                } catch (e) {
-                    console.log(e);
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
-        setYourCollectibles(collectibleUpdate);
-        const tokensPromises = [];
-        for (let i = 0; i < balance; i += 1) {
-            tokensPromises.push({ id: i, uri: await getTokenURI(address, i), owner: address });
-        }
-        const tokens = await Promise.all(tokensPromises);
-        setCollection({
-            loading: false,
-            items: tokens,
-        });
     };
-
     useEffect(() => {
         if (readContracts.EventFactory) loadCollection();
     }, [address, readContracts, writeContracts]);
 
-    console.log("collection.items", collection.items)
-    console.log("collection.items", collection.items.lenght)
-
+    //console.log("collection.items", collection.items)
+    //console.log("collection.items", collection.items.lenght)
 
     return (
         <div style={{ maxWidth: 768, margin: "20px auto", paddingBottom: 25 }}>
             {address ? (
                 <>
+                    <div>
+                        <img src={eventMetadata.image} style={{ maxWidth: 150 }} />
+                    </div>
                     <div style={{ width: 640, margin: "auto", marginTop: 2, paddingBottom: 32 }}>
                         <div style={{ padding: 32, width: 400, margin: "auto" }}>
                             <div>Event name: {eventname}</div>

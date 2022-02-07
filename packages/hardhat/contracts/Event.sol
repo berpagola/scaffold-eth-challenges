@@ -96,21 +96,12 @@ contract Event is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         returns (uint256)
     {
         _tokenIdCounter.increment();
-        console.log("current", _tokenIdCounter.current());
-        console.log("ticketLimit", ticketLimit);
         uint256 currentPrice = ticketPrice;
-        console.log("currentPrice", currentPrice);
-        console.log("msg.value", msg.value);
         require(msg.value >= currentPrice, "sorry, price has increased");
         uint256 tokenId = _tokenIdCounter.current();
         require(tokenId <= ticketLimit, "NO MORE TICKETS FOR THIS EVENT");
         uint256 currentTicketsPerWalletLimit = ticketsPerWalletLimit;
-        console.log(
-            "currentTicketsPerWalletLimit",
-            currentTicketsPerWalletLimit
-        );
         uint256 ticketsOfUser = balanceOf(to);
-        console.log("ticketsOfUser", ticketsOfUser);
         require(
             ticketsOfUser < currentTicketsPerWalletLimit,
             "CAN'T BUY MORE TICKETS WITH THIS WALLET"

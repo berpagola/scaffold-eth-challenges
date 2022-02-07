@@ -52,8 +52,8 @@ const BuyEventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts
 
     // keep track of a variable from the contract in the local React state:
     const balance = useContractReader(eventContract, "balanceOf", [address]);
-    console.log("🤗 balance of event:", balance);
-    console.log("🤗 balance of event contract:", eventContract);
+    //console.log("🤗 balance of event:", balance);
+    //console.log("🤗 balance of event contract:", eventContract);
 
     // keep track of a variable from the contract in the local React state:
     //const balance = useContractReader(readContracts, "Event", "balanceOf", [address]);
@@ -80,40 +80,40 @@ const BuyEventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts
 
     const getEventBalance = async () => {
         const balanceETH = await eventContract.getBalance();
-        console.log("balanceETH", balanceETH)
+        //console.log("balanceETH", balanceETH)
         setBalanceETH(ethers.utils.formatUnits(balanceETH, 18));
     };
 
     const getEventName = async () => {
         const name = await eventContract.getEventName();
-        console.log("name", name)
+        //console.log("name", name)
         setName(name);
     };
 
     const getEventLimit = async () => {
         const limit = await eventContract.getTicketLimit();
-        console.log("limit", limit)
+        //console.log("limit", limit)
         setLimit(ethers.utils.formatUnits(limit, 0));
     };
 
     const getTicketsSold = async () => {
         const sold = await eventContract.getTicketsSold();
-        console.log("sold", sold)
+        //console.log("sold", sold)
         setSold(ethers.utils.formatUnits(sold, 0));
     };
 
     const getTicketsPerWalletLimit = async () => {
         const walletLimit = await eventContract.getTicketsPerWalletLimit();
-        console.log("walletLimit", walletLimit)
+        //console.log("walletLimit", walletLimit)
         setWalletLimit(ethers.utils.formatUnits(walletLimit, 0));
     };
 
     const getTicketPrice = async () => {
         const price = await eventContract.getTicketPrice();
-        console.log("price", price)
+        //console.log("price", price)
         setPrice(ethers.utils.formatUnits(price, 18));
     };
-
+/*
     const getFromIPFS = async hashToGet => {
         for await (const file of ipfs.get(hashToGet)) {
             console.log(file.path);
@@ -126,13 +126,14 @@ const BuyEventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts
             return content;
         }
     };
-
+*/
     const getTokenURI = async (ownerAddress, index) => {
         const id = await eventContract.tokenOfOwnerByIndex(ownerAddress, index);
         const tokenURI = await eventContract.tokenURI(id);
         //console.log("tokenURI", tokenURI)
         try {
             const metadata = await axios.get(tokenURI);
+            console.log("metadata", metadata)
             if (metadata) {
                 return { ...metadata.data, id, tokenURI /*, approved: approved === writeContracts.GigaNFT.address */ };
             }
@@ -326,30 +327,6 @@ const BuyEventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts
         const balance = (await eventContract.balanceOf(address)).toNumber();
         //console.log("YOUR BALANCE:", balance)
         const collectibleUpdate = [];
-        for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
-            try {
-                // console.log("GEtting token index", tokenIndex);
-                const tokenId = await eventContract.tokenOfOwnerByIndex(address, tokenIndex);
-                // console.log("tokenId", tokenId);
-                const tokenURI = await eventContract.tokenURI(tokenId);
-                //  console.log("tokenURI", tokenURI);
-
-                const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-                console.log("ipfsHash", ipfsHash);
-
-                const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
-                try {
-                    const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-                    console.log("jsonManifest", jsonManifest);
-                    collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
-                } catch (e) {
-                    console.log(e);
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
         setYourCollectibles(collectibleUpdate);
         const tokensPromises = [];
         for (let i = 0; i < balance; i += 1) {
@@ -366,8 +343,8 @@ const BuyEventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts
         if (readContracts.EventFactory) loadCollection();
     }, [address, readContracts, writeContracts]);
 
-    console.log("collection.items", collection.items)
-    console.log("collection.items", collection.items.lenght)
+    //console.log("collection.items", collection.items)
+    //console.log("collection.items", collection.items.lenght)
 
 
     return (

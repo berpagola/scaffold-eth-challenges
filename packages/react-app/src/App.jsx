@@ -27,6 +27,7 @@ import { useContractConfig } from "./hooks";
 import EventsUI from "./views/EventsUI";
 import BuyEventsUI from "./views/BuyEventsUI";
 import YourEvents from "./views/YourEvents";
+import CreateEvents from "./views/CreateEvents";
 
 const { BufferList } = require("bl");
 const ipfsAPI = require("ipfs-http-client");
@@ -84,6 +85,7 @@ const STARTING_JSON = {
 
 // helper function to "Get" from IPFS
 // you usually go content.toString() after this...
+/*
 const getFromIPFS = async hashToGet => {
   for await (const file of ipfs.get(hashToGet)) {
     console.log(file.path);
@@ -96,7 +98,7 @@ const getFromIPFS = async hashToGet => {
     return content;
   }
 };
-
+*/
 // 🛰 providers
 if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
 // const mainnetProvider = getDefaultProvider("mainnet", { infura: INFURA_ID, etherscan: ETHERSCAN_KEY, quorum: 1 });
@@ -276,7 +278,7 @@ function App(props) {
 
   // keep track of a variable from the contract in the local React state:
   const totalEvents = useContractReader(readContracts, "EventFactory", "getTotalEvents");
-  console.log("🤗 totalEvents:", totalEvents);
+  //console.log("🤗 totalEvents:", totalEvents);
 
   // 📟 Listen for broadcast events
   //const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
@@ -287,7 +289,7 @@ function App(props) {
   //
   const yourBalance = totalEvents && totalEvents.toNumber && totalEvents.toNumber();
   const [yourCollectibles, setYourCollectibles] = useState();
-  console.log("yourCollectibles:", yourCollectibles)
+  //console.log("yourCollectibles:", yourCollectibles)
 
 
   useEffect(() => {
@@ -299,9 +301,9 @@ function App(props) {
           console.log("token index", tokenIndex);
           const id = await readContracts.EventFactory.tokenByIndex(tokenIndex);
           console.log("token", id);
-          const tokenURI = await readContracts.EventFactory.tokenURI(id);
-          console.log("tokenURI", tokenURI)
-          const event = await readContracts.EventFactory.getEvent(tokenURI - 1);
+          //const tokenURI = await readContracts.EventFactory.tokenURI(id);
+          //console.log("tokenURI", tokenURI)
+          const event = await readContracts.EventFactory.getEvent(id);
           console.log("event address", event.eAddr)
           //var eventContract = await ethers.getContractAt('Event', event.eAddr)
           //console.log("eventContract", eventContract)
@@ -339,6 +341,7 @@ function App(props) {
       writeContracts &&
       mainnetContracts
     ) {
+      /*
       console.log("_____________________________________ 🏗 scaffold-eth _____________________________________");
       console.log("🌎 mainnetProvider", mainnetProvider);
       console.log("🏠 localChainId", localChainId);
@@ -350,6 +353,7 @@ function App(props) {
       console.log("🌍 DAI contract on mainnet:", mainnetContracts);
       console.log("💵 yourMainnetDAIBalance", myMainnetDAIBalance);
       console.log("🔐 writeContracts", writeContracts);
+      */
     }
   }, [
     mainnetProvider,
@@ -555,9 +559,19 @@ function App(props) {
               onClick={() => {
                 setRoute("/yourEvents");
               }}
-              to="/createEvent"
+              to="/yourEvents"
             >
               My Events
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="/createEvent">
+            <Link
+              onClick={() => {
+                setRoute("/createEvent");
+              }}
+              to="/createEvent"
+            >
+              Create Event
             </Link>
           </Menu.Item>
           <Menu.Item key="/debugcontracts">
@@ -648,6 +662,18 @@ function App(props) {
             />
           </Route>
           <Route path="/createEvent">
+            <CreateEvents
+              loadWeb3Modal={loadWeb3Modal}
+              address={address}
+              tx={tx}
+              writeContracts={writeContracts}
+              readContracts={readContracts}
+              mainnetProvider={mainnetProvider}
+              blockExplorer={blockExplorer}
+              userSigner={userSigner}
+            />
+          </Route>
+          <Route path="/yourEvents">
             <YourEvents
               loadWeb3Modal={loadWeb3Modal}
               address={address}

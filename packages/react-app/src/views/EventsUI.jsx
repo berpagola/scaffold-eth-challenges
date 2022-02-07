@@ -69,49 +69,50 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
 
     const getEventName = async () => {
         const name = await eventContract.getEventName();
-        console.log("name", name)
+        //console.log("name", name)
         setName(name);
     };
 
     const getEventLimit = async () => {
         const limit = await eventContract.getTicketLimit();
-        console.log("limit", limit)
+        //console.log("limit", limit)
         setLimit(ethers.utils.formatUnits(limit, 0));
     };
 
     const getTicketsSold = async () => {
         const sold = await eventContract.getTicketsSold();
-        console.log("sold", sold)
+        //console.log("sold", sold)
         setSold(ethers.utils.formatUnits(sold, 0));
     };
 
     const getTicketPrice = async () => {
         const price = await eventContract.getTicketPrice();
-        console.log("price", price)
+        //console.log("price", price)
         setPrice(ethers.utils.formatUnits(price, 18));
     };
-
-    const getFromIPFS = async hashToGet => {
-        for await (const file of ipfs.get(hashToGet)) {
-            console.log(file.path);
-            if (!file.content) continue;
-            const content = new BufferList();
-            for await (const chunk of file.content) {
-                content.append(chunk);
+    /*
+        const getFromIPFS = async hashToGet => {
+            for await (const file of ipfs.get(hashToGet)) {
+                console.log(file.path);
+                if (!file.content) continue;
+                const content = new BufferList();
+                for await (const chunk of file.content) {
+                    content.append(chunk);
+                }
+                console.log(content);
+                return content;
             }
-            console.log(content);
-            return content;
-        }
-    };
-
+        };
+    */
     const getTokenURI = async (ownerAddress, index) => {
         const id = await eventContract.tokenOfOwnerByIndex(ownerAddress, index);
         const tokenURI = await eventContract.tokenURI(id);
-        //console.log("tokenURI", tokenURI)
+        console.log("tokenURI", tokenURI)
         try {
             const metadata = await axios.get(tokenURI);
+            console.log("metadata single event", metadata)
             if (metadata) {
-                return { ...metadata.data, id, tokenURI /*, approved: approved === writeContracts.GigaNFT.address */ };
+                return { ...metadata.data, id, tokenURI };
             }
         } catch (e) { console.log(e) }
 
@@ -328,7 +329,7 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
         loadCollection();
     }, [address, readContracts, writeContracts]);
 
-    console.log("collection.items", collection.items)
+    //console.log("collection.items", collection.items)
 
 
     return (
@@ -350,19 +351,9 @@ const EventsUI = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, m
                                     const id = item.uri.id.toNumber();;
                                     return (
                                         <List.Item key={id + "_" + item.uri + "_" + item.uri.owner}>
-                                            <Card
-                                                title={
-                                                    <div>
-                                                        <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.uri.name}
-                                                    </div>
-                                                }
-                                            >
-                                                <div>
-                                                    <img src={item.uri.image} style={{ maxWidth: 150 }} />
-                                                </div>
-                                                <div>{item.uri.description}</div>
-                                            </Card>
-
+                                            <div>
+                                                <span style={{ fontSize: 16, marginRight: 8 }}>TICKET #{id}</span>
+                                            </div>
                                             <div>
                                                 <div>
                                                     <div>Ticket used: {item.isUsed}</div>

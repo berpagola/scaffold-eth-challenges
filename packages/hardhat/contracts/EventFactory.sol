@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 contract EventFactory is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
     using SafeMath for uint256;
-    Event[] public es;
+    Event[] private es;
     using Counters for Counters.Counter;
     Counters.Counter private _idCounter;
     Counters.Counter private _tokenIdCounter;
@@ -17,40 +17,14 @@ contract EventFactory is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
     }
     
-    function create(address _owner, string memory _eventName, uint256 _ticketLimit, uint256 _ticketsPerWalletLimit, uint256 _ticketPrice) public {
+    function create(address _owner, string memory _eventName, uint256 _ticketLimit, uint256 _ticketsPerWalletLimit, uint256 _ticketPrice, string memory uri) public {
         _idCounter.increment();
         Event e = new Event(_owner, _eventName, _ticketLimit, _ticketsPerWalletLimit, _ticketPrice);
         es.push(e);
-        mintItem(_owner);
+        mintItem(_owner, uri);
     }
- /*
-    function createAndSendEther(address _owner, string memory _model, uint256 _ticketLimit) public payable {
-        _idCounter.increment();
-        Event e = (new Event){value: msg.value}(_owner, _model, _ticketLimit);
-        es.push(e);
-    }
-
-    function create2(
-        address _owner,
-        string memory _model,
-        bytes32 _salt, uint256 _ticketLimit
-    ) public {
-        _idCounter.increment();
-        Event e = (new Event){salt: _salt}(_owner, _model, _ticketLimit);
-        es.push(e);
-    }
-
-    function create2AndSendEther(
-        address _owner,
-        string memory _model,
-        bytes32 _salt, uint256 _ticketLimit
-    ) public payable {
-        _idCounter.increment();
-        Event e = (new Event){value: msg.value, salt: _salt}(_owner, _model, _ticketLimit);
-        es.push(e);
-    }
-*/
-    function getEvent(uint _index)
+ 
+    function getEvent(uint _tokenId)
         public
         view
         returns (
@@ -61,16 +35,17 @@ contract EventFactory is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
             uint256 _ticketLimit
         )
     {
-        Event e = es[_index];
+        Event e = es[_tokenId-1];
 
         return (e.owner(), e.eventName(), e.eventAddr(), address(e).balance, e.getTicketLimit());
     }
 
-    function mintItem(address to) private returns (uint256) {
+    function mintItem(address to, string memory uri) private returns (uint256) {
         _tokenIdCounter.increment();
         uint256 tokenId = _tokenIdCounter.current();
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, Strings.toString(tokenId));
+        console.log("tokenId", tokenId); 
+        _safeMint(to, tokenId); 
+        _setTokenURI(tokenId, uri);
         return tokenId;
     }
 
@@ -81,6 +56,9 @@ contract EventFactory is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         return (_idCounter.current());
     }
 
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://ipfs.io/ipfs/";
+    }
 
     // The following functions are overrides required by Solidity.
 

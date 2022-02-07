@@ -30,7 +30,7 @@ const OPENSEA_LINK = "https://testnets.opensea.io/assets/"
 
 
 
-const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer, userSigner }) => {
+const CreateEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts, mainnetProvider, blockExplorer, userSigner }) => {
     const [collection, setCollection] = useState({
         loading: true,
         items: [],
@@ -316,29 +316,78 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
         <div style={{ maxWidth: 768, margin: "20px auto", paddingBottom: 25 }}>
             {address ? (
                 <>
-                    {
-                        <List
-                            bordered
-                            dataSource={collection.items}
-                            renderItem={item => {
-                                return (
-                                    <YourSingleEventUI
-                                        loadWeb3Modal={loadWeb3Modal}
-                                        address={address}
-                                        tx={tx}
-                                        writeContracts={writeContracts}
-                                        readContracts={readContracts}
-                                        mainnetProvider={mainnetProvider}
-                                        blockExplorer={blockExplorer}
-                                        userSigner={userSigner}
-                                        eventAdd={item.eventAddress}
-                                        tokenId={item.tokenId}
-                                    />
-                                );
-                            }}
-                        />
+                    <div style={{ maxWidth: 350, margin: "20px auto" }}>
+                        <h2 style={{ marginBottom: "20px" }}>New Event</h2>
+                        <div style={{ display: "flex", alignItems: "center", maxWidth: 350, margin: "0 auto", marginBottom: "10px" }}>
+                            <label htmlFor="name" style={{ marginRight: 10, flexGrow: 1, flex: 1, textAlign: "left" }}>
+                                Event name:
+                            </label>
+                            <Input
+                                placeholder="Event name"
+                                id="name"
+                                style={{ flex: 2 }}
+                                value={neweventname}
+                                onChange={e => setNewName(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", maxWidth: 350, margin: "0 auto", marginBottom: "10px" }}>
+                            <label htmlFor="quantity" style={{ marginRight: 20, flexGrow: 1, flex: 1, textAlign: "left" }}>
+                                Ticket quantity:
+                            </label>
+                            <Input
+                                type="number"
+                                placeholder="Total amount of tickets"
+                                id="quantity"
+                                style={{ flex: 2 }}
+                                value={q}
+                                onChange={e => setQ(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", maxWidth: 350, margin: "0 auto", marginBottom: "10px" }}>
+                            <label htmlFor="quantityPerWallet" style={{ marginRight: 20, flexGrow: 1, flex: 1, textAlign: "left" }}>
+                                Ticket per wallet:
+                            </label>
+                            <Input
+                                type="number"
+                                placeholder="Total of tickets per wallet"
+                                id="quantityPerWallet"
+                                style={{ flex: 2 }}
+                                value={newTicketsPerWallet}
+                                onChange={e => setnewTicketsPerWallet(e.target.value)}
+                            />
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", maxWidth: 350, margin: "0 auto", marginBottom: "10px" }}>
+                            <label htmlFor="price" style={{ marginRight: 20, flexGrow: 1, flex: 1, textAlign: "left" }}>
+                                Ticket price (ETH):
+                            </label>
+                            <Input
+                                type="number"
+                                placeholder="Total amount of tickets"
+                                id="price"
+                                style={{ flex: 2 }}
+                                value={newPrice}
+                                onChange={e => setnewPrice(e.target.value)}
+                            />
+                        </div>
 
-                    }
+                        <div className='buttons fadein'>
+                            <div className='button'>
+                                <label htmlFor='single'>    
+                                Cargar imagen
+                                </label>
+                                <input type='file' id='single' onChange={e => getImgPath(e)} />
+                            </div>
+                        </div>
+                        <Button
+                            style={{ marginTop: 15 }}
+                            type="primary"
+                            onClick={() => {
+                                mintItem();
+                            }}
+                        >
+                            CREATE EVENT
+                        </Button>
+                    </div>
                 </>
             ) : (
                 <Button key="loginbutton" type="primary" onClick={loadWeb3Modal}>
@@ -350,4 +399,4 @@ const YourEvents = ({ loadWeb3Modal, address, tx, readContracts, writeContracts,
     );
 };
 
-export default YourEvents;
+export default CreateEvents;
